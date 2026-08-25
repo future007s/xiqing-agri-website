@@ -172,6 +172,9 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 .site-footer p { margin-bottom: .2rem; }
 .site-footer__brand { font-size: 1.6rem; font-weight: 800; letter-spacing: -.05em; }
 .footer-label, .site-footer__meta { font-size: .58rem; color: #a6a89f; }
+.site-footer__contact a { border-bottom: 1px solid #6f7952; font-family: ui-monospace, monospace; font-size: .95rem; }
+.site-footer__contact a:hover { color: var(--signal); }
+.site-footer__contact-note { color: #b9bbb3; font-size: .75rem; }
 .site-footer__meta { align-self: end; }
 
 @media (min-width: 700px) {
@@ -192,7 +195,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	.record-aside { position: sticky; top: 1.5rem; }
 	.about-intro__grid { grid-template-columns: 1fr 3fr; }
 	.direction-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-	.site-footer__inner { grid-template-columns: 1fr 1.5fr 1fr; }
+	.site-footer__inner { grid-template-columns: 1fr 1.5fr 1.2fr 1fr; }
 }
 
 @media (min-width: 1050px) {
