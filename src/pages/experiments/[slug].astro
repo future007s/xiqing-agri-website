@@ -129,17 +129,83 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 		</section>
 	)}
 
-	{publicMedia.length > 0 && (
-		<section class="record-section record-section--tint" aria-labelledby="media-title">
+	<section class="record-section record-section--tint" aria-labelledby="media-title" data-media-shell data-experiment-id={data.id} hidden={publicMedia.length === 0}>
 			<div class="shell">
 				<div class="record-section__heading"><p class="eyebrow">FIELD MEDIA</p><h2 id="media-title">照片与视频</h2></div>
-				<div class="media-grid">
-					{publicMedia.map((item) => <figure class:list={['media-card', `media-card--${item.kind}`]}>
-						{item.kind === 'image' ? <img src={item.src} alt={item.alt} loading="lazy" /> : <video controls preload="metadata" poster={item.poster}><source src={item.src} /></video>}
+				<div class="media-grid" data-media-grid>
+					{publicMedia.map((item) => <figure class:list={['media-card', `media-card--${item.kind}`]} data-media-id={item.id}>
+						{item.kind === 'image' ? <a href={item.src} target="_blank" rel="noreferrer"><img src={item.thumbnail ?? item.src} alt={item.alt} loading="lazy" decoding="async" /></a> : <video controls preload="metadata" poster={item.poster ?? item.thumbnail}><source src={item.src} /></video>}
 						<figcaption><div><strong>{item.caption}</strong><span>{item.at}</span></div>{(item.eventId || item.plantId) && <small>{item.eventId && `事件 ${item.eventId}`}{item.eventId && item.plantId && ' · '}{item.plantId && `植物 ${item.plantId}`}</small>}</figcaption>
 					</figure>)}
 				</div>
+				<p class="media-empty" data-media-empty hidden>暂无已审核的公开媒体。</p>
 			</div>
-		</section>
-	)}
+	</section>
 </ExperimentLayout>
+
+<script is:inline define:vars={{ experimentId: data.id }}>
+	const mediaShell = document.querySelector('[data-media-shell]');
+	const mediaGrid = document.querySelector('[data-media-grid]');
+	const mediaEmpty = document.querySelector('[data-media-empty]');
+
+	const addDynamicMedia = (item) => {
+		if (!mediaGrid || !item?.id || !item?.src || !item?.kind || mediaGrid.querySelector(`[data-media-id="${CSS.escape(item.id)}"]`)) return;
+		const figure = document.createElement('figure');
+		figure.className = `media-card media-card--${item.kind}`;
+		figure.dataset.mediaId = item.id;
+		if (item.kind === 'image') {
+			const link = document.createElement('a');
+			link.href = item.src;
+			link.target = '_blank';
+			link.rel = 'noreferrer';
+			const image = document.createElement('img');
+			image.src = item.thumbnail || item.src;
+			image.alt = item.alt || item.caption || '实验媒体';
+			image.loading = 'lazy';
+			image.decoding = 'async';
+			link.append(image);
+			figure.append(link);
+		} else {
+			const video = document.createElement('video');
+			video.controls = true;
+			video.preload = 'metadata';
+			if (item.poster || item.thumbnail) video.poster = item.poster || item.thumbnail;
+			const source = document.createElement('source');
+			source.src = item.src;
+			video.append(source);
+			figure.append(video);
+		}
+		const caption = document.createElement('figcaption');
+		const captionRow = document.createElement('div');
+		const title = document.createElement('strong');
+		title.textContent = item.caption || '未命名媒体';
+		const date = document.createElement('span');
+		date.textContent = item.at || '';
+		captionRow.append(title, date);
+		caption.append(captionRow);
+		if (item.eventId || item.plantId) {
+			const relation = document.createElement('small');
+			relation.textContent = [item.eventId && `事件 ${item.eventId}`, item.plantId && `植物 ${item.plantId}`].filter(Boolean).join(' · ');
+			caption.append(relation);
+		}
+		figure.append(caption);
+		mediaGrid.append(figure);
+	};
+
+	const loadDynamicMedia = async () => {
+		try {
+			const response = await fetch(`/api/experiments/${encodeURIComponent(experimentId)}/media`, { headers: { Accept: 'application/json' } });
+			if (!response.ok) return;
+			const payload = await response.json();
+			const items = Array.isArray(payload) ? payload : payload.media;
+			if (!Array.isArray(items)) return;
+			items.forEach(addDynamicMedia);
+			if (items.length > 0 && mediaShell) mediaShell.hidden = false;
+			if (mediaGrid && mediaGrid.children.length === 0 && mediaEmpty) mediaEmpty.hidden = false;
+		} catch {
+			// The static site remains fully usable when the optional media API is not configured.
+		}
+	};
+
+	void loadDynamicMedia();
+</script>

@@ -11,6 +11,8 @@
 - Markdown Content Collections
 - 静态生成，无数据库、无服务端运行时
 
+媒体上传能力通过 Cloudflare Pages Functions 提供：R2 保存图片/视频，D1 保存媒体索引；未绑定这两个资源时，官网仍可作为纯静态站点运行。
+
 ## 本地启动
 
 ```bash
@@ -42,6 +44,13 @@ npm run preview
 4. 未实测的数值字段留空，不要写 `0`。
 
 详情页会自动渲染实验目标、传感器、事件时间线、自动采集摘要、人工观察、植物分析和已确认的图片/视频。
+
+媒体相关文件：
+
+- [`docs/media-storage-convention.md`](docs/media-storage-convention.md)：R2 目录、D1 索引、审核和备份规则。
+- [`migrations/0001_experiment_media.sql`](migrations/0001_experiment_media.sql)：D1 媒体索引表。
+- [`wrangler.toml.example`](wrangler.toml.example)：R2/D1 绑定示例；真实口令使用 Cloudflare Pages Secret。
+- `/media-upload`：手动上传页面，上传成功后生成可复制的 `media` YAML 字段。
 
 实验列表、详情页与 sitemap 会在构建时自动生成。
 

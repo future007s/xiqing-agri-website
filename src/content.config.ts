@@ -66,6 +66,7 @@ const mediaSchema = z.object({
 	kind: z.enum(['image', 'video']),
 	src: z.string(),
 	poster: z.string().nullable().optional(),
+	thumbnail: z.string().nullable().optional(),
 	at: z.string(),
 	eventId: z.string().nullable().optional(),
 	plantId: z.string().nullable().optional(),
@@ -73,6 +74,13 @@ const mediaSchema = z.object({
 	alt: z.string(),
 	visibility: z.enum(['public', 'private']).default('public'),
 	reviewStatus,
+	storage: z.enum(['static', 'r2', 'external']).default('static'),
+	objectKey: z.string().nullable().optional(),
+	mimeType: z.string().nullable().optional(),
+	sizeBytes: z.number().int().nullable().optional(),
+	checksum: z.string().nullable().optional(),
+	source: z.enum(['manual_upload', 'camera', 'dtu', 'ocr', 'external']).default('manual_upload'),
+	uploadedAt: z.string().nullable().optional(),
 });
 
 const experiments = defineCollection({

@@ -113,11 +113,13 @@ analyses:
     reviewStatus: "pending"
 
 # 图片和视频。src 可以是 /media/... 的静态路径，也可以是 R2/CDN HTTPS 地址。
+# 原始文件放 R2，D1 媒体索引保存关联关系；不要把二进制内容写进 Markdown 或数据库。
 media:
   - id: "IMG-T01-002-001"
     kind: "image" # image | video
     src: "/media/T01-002/setup-001.webp"
     poster:
+    thumbnail:
     at: "2026-08-25T10:05:00+08:00"
     eventId: "EVT-T01-002-001"
     plantId:
@@ -125,11 +127,19 @@ media:
     alt: "第一代气雾培种植塔完成搭建后的现场照片"
     visibility: "public" # public | private
     reviewStatus: "confirmed"
+    storage: "r2" # static | r2 | external
+    objectKey: "experiments/T01-002/2026-08-25/setup-001.webp"
+    mimeType: "image/webp"
+    sizeBytes:
+    checksum:
+    source: "manual_upload" # manual_upload | camera | dtu | ocr | external
+    uploadedAt: "2026-08-25T10:06:00+08:00"
 
   - id: "VID-T01-002-001"
     kind: "video"
     src: "https://media.example.com/T01-002/spray-test-001.mp4"
     poster: "https://media.example.com/T01-002/spray-test-001.webp"
+    thumbnail:
     at: "2026-08-25T11:00:00+08:00"
     eventId: "EVT-T01-002-001"
     plantId:
@@ -137,6 +147,13 @@ media:
     alt: "气雾培喷雾系统运行测试视频"
     visibility: "public"
     reviewStatus: "confirmed"
+    storage: "r2"
+    objectKey: "experiments/T01-002/2026-08-25/spray-test-001.mp4"
+    mimeType: "video/mp4"
+    sizeBytes:
+    checksum:
+    source: "manual_upload"
+    uploadedAt: "2026-08-25T11:01:00+08:00"
 
 featured: false
 ---
@@ -172,6 +189,12 @@ POST /api/experiments/{experimentId}/telemetry-snapshots
 POST /api/experiments/{experimentId}/observations
 POST /api/experiments/{experimentId}/media
 POST /api/experiments/{experimentId}/analyses
+
+# 媒体文件上传与动态读取
+POST /api/media/upload
+GET /api/experiments/{experimentId}/media
 ```
 
-接口层负责校验字段、生成唯一 ID、写入数据库或对象存储，并定期生成同结构的 Markdown/JSON 公共快照。官网只展示 `visibility: public` 且 `reviewStatus: confirmed` 的内容。
+`POST /api/media/upload` 接收 multipart/form-data：`experimentId`、`kind`、`file`、`capturedAt`、`caption`、`alt`、`eventId`、`plantId`、`visibility` 和 `reviewStatus`。上传口令通过 `Authorization: Bearer` 传递。接口负责校验字段、生成唯一 ID、写入 R2 和 D1，并返回同结构的媒体 YAML。官网只展示 `visibility: public` 且 `reviewStatus: confirmed` 的内容。
+
+如果 R2 已写入但 D1 尚未配置，接口会返回 `202` 和 `metadataStatus: pending_db`，保留返回字段用于补写索引。

@@ -198,10 +198,45 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 .media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .media-card { margin: 0; border: 1px solid var(--line); background: var(--paper); }
 .media-card img, .media-card video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--ink); }
+.media-card > a { display: block; }
+.media-card > a:hover img { opacity: .86; }
 .media-card figcaption { display: grid; gap: .35rem; padding: .8rem; }
 .media-card figcaption div { display: flex; justify-content: space-between; gap: 1rem; }
 .media-card figcaption strong { font-size: .85rem; }
 .media-card figcaption span, .media-card figcaption small { color: var(--muted); font-family: ui-monospace, monospace; font-size: .6rem; }
+.media-empty { margin: 1rem 0 0; color: var(--muted); font-family: ui-monospace, monospace; font-size: .7rem; }
+
+.upload-section { padding-bottom: clamp(5rem, 10vw, 9rem); }
+.upload-layout { display: grid; gap: 3rem; }
+.upload-layout h2 { max-width: 680px; margin-bottom: 1rem; font-size: clamp(2rem, 5vw, 4.5rem); }
+.upload-copy { max-width: 560px; color: #454741; }
+.upload-rules { display: grid; gap: 0; max-width: 620px; margin-top: 2.5rem; border-top: 1px solid var(--line); }
+.upload-rules p { display: grid; gap: .45rem; margin: 0; padding: .9rem 0; border-bottom: 1px solid var(--line); }
+.upload-rules strong { font-family: ui-monospace, monospace; font-size: .63rem; color: var(--signal-dark); }
+.upload-rules span { color: var(--muted); font-size: .84rem; }
+.upload-form, .upload-result { padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid var(--line); background: var(--white); }
+.upload-form { display: grid; gap: 1rem; }
+.form-row { display: grid; gap: 1rem; }
+.form-field { display: grid; gap: .35rem; }
+.form-field label { font-size: .78rem; font-weight: 700; }
+.form-field label span { color: #a65d4f; }
+.form-field input, .form-field select, .form-field textarea { width: 100%; padding: .7rem .75rem; border: 1px solid var(--line); border-radius: 0; background: var(--paper); color: var(--ink); font: inherit; font-size: .84rem; }
+.form-field textarea { resize: vertical; }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--ink); outline: 2px solid color-mix(in srgb, var(--signal) 60%, transparent); outline-offset: 1px; }
+.form-field small { color: var(--muted); font-size: .68rem; line-height: 1.45; }
+.upload-submit { width: 100%; margin-top: .5rem; }
+.upload-status { min-height: 1.5em; margin: 0; color: var(--muted); font-size: .78rem; }
+.upload-preview { padding: .75rem; border: 1px dashed var(--line); background: var(--paper); }
+.upload-preview p { margin: 0 0 .65rem; font-family: ui-monospace, monospace; font-size: .68rem; color: var(--muted); }
+.upload-preview img, .upload-preview video { width: 100%; max-height: 360px; object-fit: contain; background: var(--ink); }
+.upload-result { display: grid; gap: 1rem; margin-top: 2rem; background: var(--ink); color: var(--white); }
+.upload-result .record-section__heading { margin-bottom: 0; }
+.upload-result .record-section__heading .eyebrow { color: #a6a89f; }
+.upload-result .record-section__heading h2 { color: var(--white); }
+.upload-result > p { margin: 0; color: #b9bbb3; font-size: .84rem; }
+.upload-result pre { overflow-x: auto; margin: 0; padding: 1rem; border: 1px solid #4b4d47; background: #20221f; color: #e3e5dd; font: .72rem/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.upload-result .button { border-color: #a6a89f; color: var(--white); }
+.upload-result .button:hover { background: var(--white); color: var(--ink); }
 
 .about-intro { padding-block: clamp(5rem, 10vw, 9rem); }
 .about-intro__grid { display: grid; gap: 2rem; }
@@ -246,6 +281,9 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	.about-intro__grid { grid-template-columns: 1fr 3fr; }
 	.direction-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 	.site-footer__inner { grid-template-columns: 1fr 1.5fr 1.2fr 1fr; }
+	.upload-layout { grid-template-columns: minmax(0, 1fr) minmax(380px, .9fr); align-items: start; gap: 5rem; }
+	.form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.upload-result { grid-column: 2; margin-top: 0; }
 }
 
 @media (min-width: 1050px) {

@@ -1,0 +1,3 @@
+MEDIA_PUBLIC_BASE_URL="https://media.xiqingagri.com"
+DEFAULT_TIMEZONE_OFFSET="+08:00"
+MEDIA_UPLOAD_TOKEN="replace-with-a-long-random-token"
