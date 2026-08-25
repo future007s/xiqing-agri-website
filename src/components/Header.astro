@@ -1,24 +1,58 @@
 ---
 const pathname = Astro.url.pathname;
 
-const links = [
-	{ href: '/', label: '首页' },
-	{ href: '/experiments', label: '实验记录' },
-	{ href: '/about', label: '关于曦清' },
-];
+interface Props {
+	locale?: 'zh' | 'en';
+	alternatePath?: string;
+	alternateLocale?: 'zh' | 'en';
+}
 
-const isActive = (href: string) =>
-	href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
+const { locale = 'zh', alternatePath, alternateLocale = locale === 'zh' ? 'en' : 'zh' } = Astro.props;
+const isEnglish = locale === 'en';
+const prefix = isEnglish ? '/en' : '';
+const links = isEnglish
+	? [
+		{ href: prefix, label: 'Home' },
+		{ href: `${prefix}/experiments`, label: 'Experiments' },
+		{ href: `${prefix}/about`, label: 'About' },
+	]
+	: [
+		{ href: '/', label: '首页' },
+		{ href: '/experiments', label: '实验记录' },
+		{ href: '/about', label: '关于曦清' },
+	];
+
+const normalizePath = (path: string) => path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+const currentPath = normalizePath(pathname);
+const isActive = (href: string) => {
+	const normalizedHref = normalizePath(href);
+	return normalizedHref === '/' || normalizedHref === '/en'
+		? currentPath === normalizedHref
+		: currentPath === normalizedHref || currentPath.startsWith(`${normalizedHref}/`);
+};
 ---
 
 <header class="site-header">
-	<a class="skip-link" href="#main-content">跳到主要内容</a>
+	<a class="skip-link" href="#main-content">{isEnglish ? 'Skip to main content' : '跳到主要内容'}</a>
 	<div class="site-header__inner shell">
-		<a class="wordmark" href="/" aria-label="曦清农业首页"><span>曦清</span><small>XIQING AGRI</small></a>
-		<nav aria-label="主导航">
-			{links.map((link) => (
-				<a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
-			))}
-		</nav>
+		<a class="wordmark" href={isEnglish ? '/en' : '/'} aria-label={isEnglish ? 'XIQING AGRI home' : '曦清农业首页'}><span>曦清</span><small>XIQING AGRI</small></a>
+		<div class="site-header__actions">
+			<nav aria-label={isEnglish ? 'Primary navigation' : '主导航'}>
+				{links.map((link) => (
+					<a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
+				))}
+			</nav>
+			{alternatePath && (
+				<a
+					class="language-switch"
+					href={alternatePath}
+					lang={alternateLocale === 'en' ? 'en' : 'zh-CN'}
+					hreflang={alternateLocale === 'en' ? 'en' : 'zh-CN'}
+					aria-label={isEnglish ? '切换到中文' : 'Switch to English'}
+				>
+					{isEnglish ? '中文' : 'EN'}
+				</a>
+			)}
+		</div>
 	</div>
 </header>

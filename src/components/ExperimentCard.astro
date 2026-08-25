@@ -1,27 +1,33 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { displayValue, formatDate, statusLabels } from '../lib/experiments';
+import { displayValue, formatDate, statusLabels, statusLabelsEn } from '../lib/experiments';
 
 interface Props {
-	experiment: CollectionEntry<'experiments'>;
+	experiment: CollectionEntry<'experiments'> | CollectionEntry<'experimentsEn'>;
+	locale?: 'zh' | 'en';
 }
 
-const { experiment } = Astro.props;
+const { experiment, locale = 'zh' } = Astro.props;
 const { data } = experiment;
+const isEnglish = locale === 'en';
+const href = `${isEnglish ? '/en' : ''}/experiments/${experiment.id}`;
+const labels = isEnglish
+	? { date: 'Date', tower: 'Tower', crop: 'Crop', yield: 'Yield', view: 'View experiment', pending: 'Pending' }
+	: { date: '日期', tower: '塔型', crop: '作物', yield: '产量', view: '查看实验', pending: '待实测' };
 ---
 
 <article class="experiment-card">
-	<a href={`/experiments/${experiment.id}`} aria-label={`查看实验 ${data.id}：${data.title}`}>
+	<a href={href} aria-label={`${labels.view} ${data.id}: ${data.title}`}>
 		<div class="experiment-card__meta">
 			<span>{data.id}</span>
-			<span class:list={['badge', `badge--${data.status}`]}>{statusLabels[data.status]}</span>
+			<span class:list={['badge', `badge--${data.status}`]}>{isEnglish ? statusLabelsEn[data.status] : statusLabels[data.status]}</span>
 		</div>
 		<h3>{data.title}</h3>
 		<dl>
-			<div><dt>日期</dt><dd>{formatDate(data.startDate)}</dd></div>
-			<div><dt>塔型</dt><dd>{data.tower}</dd></div>
-			<div><dt>作物</dt><dd>{data.plant}</dd></div>
-			<div><dt>产量</dt><dd>{displayValue(data.yieldKg, 'kg')}</dd></div>
+			<div><dt>{labels.date}</dt><dd>{formatDate(data.startDate)}</dd></div>
+			<div><dt>{labels.tower}</dt><dd>{data.tower}</dd></div>
+			<div><dt>{labels.crop}</dt><dd>{data.plant}</dd></div>
+			<div><dt>{labels.yield}</dt><dd>{displayValue(data.yieldKg, 'kg', labels.pending)}</dd></div>
 		</dl>
 		<span class="experiment-card__arrow" aria-hidden="true">↗</span>
 	</a>

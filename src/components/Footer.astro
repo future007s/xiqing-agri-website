@@ -1,11 +1,20 @@
+---
+interface Props {
+	locale?: 'zh' | 'en';
+}
+
+const { locale = 'zh' } = Astro.props;
+const isEnglish = locale === 'en';
+---
+
 <footer class="site-footer">
 	<div class="site-footer__inner shell">
-		<div><p class="site-footer__brand">XIQING AGRI</p><p>曦清农业</p></div>
-		<div><p class="footer-label">工商主体</p><p>青岛市即墨区曦清智慧农业产业部</p></div>
+		<div><p class="site-footer__brand">XIQING AGRI</p><p>{isEnglish ? 'Verifiable agricultural engineering' : '曦清农业'}</p></div>
+		<div><p class="footer-label">{isEnglish ? 'REGISTERED ENTITY' : '工商主体'}</p><p>{isEnglish ? 'Xiqing Smart Agriculture Industry Department, Jimo District, Qingdao' : '青岛市即墨区曦清智慧农业产业部'}</p></div>
 		<div id="contact" class="site-footer__contact">
-			<p class="footer-label">联系方式</p>
+			<p class="footer-label">{isEnglish ? 'CONTACT' : '联系方式'}</p>
 			<p><a href="tel:+8613325005727">13325005727</a></p>
-			<p class="site-footer__contact-note">电话 / 微信同号</p>
+			<p class="site-footer__contact-note">{isEnglish ? 'Phone / WeChat' : '电话 / 微信同号'}</p>
 		</div>
 		<div class="site-footer__meta"><p>QINGDAO · CHINA</p><p>© 2026 XIQING AGRI</p></div>
 	</div>

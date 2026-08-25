@@ -1,6 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import { formatDate, statusLabels, type ExperimentStatus } from '../lib/experiments';
+import { formatDate, statusLabels, statusLabelsEn, type ExperimentStatus } from '../lib/experiments';
 
 interface Props {
 	id: string;
@@ -9,22 +9,25 @@ interface Props {
 	status: ExperimentStatus;
 	startDate: string;
 	description: string;
+	locale?: 'zh' | 'en';
 }
 
-const { id, title, tower, status, startDate, description } = Astro.props;
+const { id, title, tower, status, startDate, description, locale = 'zh' } = Astro.props;
+const isEnglish = locale === 'en';
+const alternatePath = isEnglish ? `/experiments/${id.toLowerCase()}` : `/en/experiments/${id.toLowerCase()}`;
 ---
 
-<BaseLayout title={`${id} ${title} | 曦清农业`} description={description} type="article">
+<BaseLayout title={`${id} ${title} | ${isEnglish ? 'XIQING AGRI' : '曦清农业'}`} description={description} type="article" locale={locale} alternatePath={alternatePath}>
 	<main>
 		<header class="record-hero">
 			<div class="shell record-hero__inner">
 				<p class="eyebrow">EXPERIMENT RECORD / {tower}</p>
 				<div class="record-hero__code">
 					<span>{id}</span>
-					<span class:list={['badge', `badge--${status}`]}>{statusLabels[status]}</span>
+					<span class:list={['badge', `badge--${status}`]}>{isEnglish ? statusLabelsEn[status] : statusLabels[status]}</span>
 				</div>
 				<h1>{title}</h1>
-				<div class="record-hero__meta"><span>开始日期 {formatDate(startDate)}</span><span>记录原则：未知 ≠ 0</span></div>
+				<div class="record-hero__meta"><span>{isEnglish ? 'START DATE' : '开始日期'} {formatDate(startDate)}</span><span>{isEnglish ? 'RULE: UNKNOWN ≠ ZERO' : '记录原则：未知 ≠ 0'}</span></div>
 			</div>
 		</header>
 		<slot />

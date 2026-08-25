@@ -9,15 +9,30 @@ interface Props {
 	image?: string;
 	type?: 'website' | 'article';
 	noindex?: boolean;
+	locale?: 'zh' | 'en';
+	alternatePath?: string;
 }
 
-const { title, description, image = '/images/xiqing-social-card.png', type = 'website', noindex = false } = Astro.props;
+const {
+	title,
+	description,
+	image = '/images/xiqing-social-card.png',
+	type = 'website',
+	noindex = false,
+	locale = 'zh',
+	alternatePath,
+} = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const socialImage = new URL(image, Astro.site);
+const alternateLocale = locale === 'zh' ? 'en' : 'zh';
+const alternateUrl = alternatePath ? new URL(alternatePath, Astro.site) : undefined;
+const chineseUrl = locale === 'zh' ? canonical : alternateUrl;
+const englishUrl = locale === 'en' ? canonical : alternateUrl;
+const isEnglish = locale === 'en';
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={isEnglish ? 'en' : 'zh-CN'}>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,27 +40,31 @@ const socialImage = new URL(image, Astro.site);
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={canonical} />
+		{chineseUrl && <link rel="alternate" hreflang="zh-CN" href={chineseUrl} />}
+		{englishUrl && <link rel="alternate" hreflang="en" href={englishUrl} />}
+		{chineseUrl && <link rel="alternate" hreflang="x-default" href={chineseUrl} />}
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="theme-color" content="#f2f0e9" />
 		{noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
 		<meta property="og:type" content={type} />
-		<meta property="og:site_name" content="曦清农业 XIQING AGRI" />
-		<meta property="og:locale" content="zh_CN" />
+		<meta property="og:site_name" content={isEnglish ? 'XIQING AGRI' : '曦清农业 XIQING AGRI'} />
+		<meta property="og:locale" content={isEnglish ? 'en_US' : 'zh_CN'} />
+		{alternatePath && <meta property="og:locale:alternate" content={isEnglish ? 'zh_CN' : 'en_US'} />}
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
 		<meta property="og:image" content={socialImage} />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
-		<meta property="og:image:alt" content="曦清农业：把农业做成可以验证的工程" />
+		<meta property="og:image:alt" content={isEnglish ? 'XIQING AGRI: Engineering agriculture through verifiable experiments' : '曦清农业：把农业做成可以验证的工程'} />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={socialImage} />
 	</head>
 	<body>
-		<Header />
+		<Header locale={locale} alternatePath={alternatePath} alternateLocale={alternateLocale} />
 		<div id="main-content"><slot /></div>
-		<Footer />
+		<Footer locale={locale} />
 	</body>
 </html>

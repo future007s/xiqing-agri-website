@@ -83,9 +83,7 @@ const mediaSchema = z.object({
 	uploadedAt: z.string().nullable().optional(),
 });
 
-const experiments = defineCollection({
-	loader: glob({ base: './src/content/experiments', pattern: '**/*.{md,mdx}' }),
-	schema: z.object({
+const experimentSchema = z.object({
 		templateVersion: z.number().int().default(1),
 		id: z.string(),
 		title: z.string(),
@@ -114,7 +112,16 @@ const experiments = defineCollection({
 		analyses: z.array(analysisSchema).default([]),
 		media: z.array(mediaSchema).default([]),
 		featured: z.boolean().default(false),
-	}),
+	});
+
+const experiments = defineCollection({
+	loader: glob({ base: './src/content/experiments', pattern: '**/*.{md,mdx}' }),
+	schema: experimentSchema,
 });
 
-export const collections = { experiments };
+const experimentsEn = defineCollection({
+	loader: glob({ base: './src/content/experiments-en', pattern: '**/*.{md,mdx}' }),
+	schema: experimentSchema,
+});
+
+export const collections = { experiments, experimentsEn };

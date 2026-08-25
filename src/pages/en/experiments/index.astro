@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+import ExperimentCard from '../../../components/ExperimentCard.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { sortExperimentsNewestFirst } from '../../../lib/experiments';
+
+const experiments = (await getCollection('experimentsEn')).sort(sortExperimentsNewestFirst);
+---
+
+<BaseLayout
+	title="Experiment Records | XIQING AGRI"
+	description="Browse XIQING AGRI experiments in aeroponics, natural light and automated control. Successful and failed trials remain part of the record."
+	locale="en"
+	alternatePath="/experiments"
+>
+	<main>
+		<header class="page-hero shell">
+			<p class="eyebrow">EXPERIMENT DATABASE</p>
+			<div class="page-hero__heading"><h1>Experiments</h1><p>{String(experiments.length).padStart(2, '0')} RECORDS</p></div>
+			<p class="page-hero__intro">Each record is generated from a structured Markdown file. Design values, measurements and unverified hypotheses are shown separately; missing data is never replaced with zero.</p>
+		</header>
+		<section class="section section--tint" aria-label="All experiments">
+			<div class="shell experiment-list">
+				{experiments.map((experiment) => <ExperimentCard experiment={experiment} locale="en" />)}
+			</div>
+		</section>
+	</main>
+</BaseLayout>

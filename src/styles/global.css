@@ -55,9 +55,17 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	letter-spacing: .08em;
 }
 .wordmark small { font-size: .61rem; font-weight: 500; }
+.site-header__actions { display: flex; align-items: center; gap: 1rem; }
 .site-header nav { display: flex; gap: 1rem; font-size: .69rem; letter-spacing: 0; }
 .site-header nav a { padding-block: .4rem; border-bottom: 1px solid transparent; }
 .site-header nav a:hover, .site-header nav a[aria-current="page"] { border-color: var(--ink); }
+.language-switch {
+	display: inline-flex; min-width: 2.75rem; align-items: center; justify-content: center;
+	padding: .35rem .55rem; border: 1px solid var(--ink); font-family: ui-monospace, monospace;
+	font-size: .64rem; font-weight: 700; letter-spacing: .04em; line-height: 1;
+	transition: background-color 150ms ease, color 150ms ease;
+}
+.language-switch:hover { background: var(--ink); color: var(--white); }
 
 .hero { min-height: calc(100svh - 74px); display: grid; grid-template-rows: auto 1fr auto; padding-block: 1.2rem; }
 .hero__topline, .hero__index { display: flex; justify-content: space-between; font-size: .58rem; color: var(--muted); }
@@ -323,7 +331,10 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 
 @media (max-width: 560px) {
 	.wordmark small { display: none; }
-	.site-header nav { gap: .7rem; font-size: .63rem; }
+	.site-header__inner { gap: .55rem; }
+	.site-header__actions { gap: .55rem; }
+	.site-header nav { gap: .55rem; font-size: .59rem; }
+	.language-switch { min-width: 2.35rem; padding-inline: .4rem; font-size: .59rem; }
 	.hero__topline span:last-child, .hero__index span:last-child { display: none; }
 	.section-heading--row, .page-hero__heading, .record-hero__meta { align-items: flex-start; flex-direction: column; }
 	.question-grid article { grid-template-columns: 32px 1fr; }
@@ -331,6 +342,11 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	.page-hero__heading > p { text-align: left; }
 	.direction-list { grid-template-columns: 1fr; }
 	.media-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 390px) {
+	.site-header nav { gap: .4rem; font-size: .55rem; }
+	.language-switch { min-width: 2.1rem; padding-inline: .3rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
