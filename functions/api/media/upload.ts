@@ -83,6 +83,8 @@ export const onRequestPost = async ({ request, env }: PagesContext<MediaEnv>): P
 		checksum,
 		source: 'manual_upload',
 		uploadedAt,
+		deletedAt: null,
+		deleteReason: null,
 	};
 
 	let metadataStatus: 'written' | 'pending_db' = 'pending_db';

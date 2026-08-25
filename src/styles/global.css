@@ -238,6 +238,29 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 .upload-result .button { border-color: #a6a89f; color: var(--white); }
 .upload-result .button:hover { background: var(--white); color: var(--ink); }
 
+.management-section { padding-bottom: clamp(5rem, 10vw, 9rem); }
+.management-layout { display: grid; gap: 3rem; }
+.management-layout h2 { max-width: 680px; margin-bottom: 1rem; font-size: clamp(2rem, 5vw, 4.5rem); }
+.management-results { margin-top: clamp(4rem, 8vw, 7rem); }
+.management-summary { margin: -2rem 0 2rem; color: var(--muted); font-family: ui-monospace, monospace; font-size: .72rem; }
+.management-list { display: grid; gap: 1rem; }
+.management-card { display: grid; gap: 1.2rem; padding: 1.2rem; border: 1px solid var(--line); background: var(--white); }
+.management-card--deleted { opacity: .78; background: var(--paper-deep); }
+.management-card header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--line); }
+.management-card header h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.management-card__preview { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; align-items: end; gap: .8rem; }
+.management-card__preview img, .management-card__preview video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--ink); }
+.management-card__preview a { color: var(--muted); font: .66rem ui-monospace, monospace; overflow-wrap: anywhere; }
+.management-card__form { display: grid; gap: .8rem; }
+.management-field { display: grid; gap: .25rem; }
+.management-field > span { color: var(--muted); font-size: .68rem; font-weight: 700; }
+.management-field input, .management-field select, .management-field textarea { width: 100%; padding: .55rem .65rem; border: 1px solid var(--line); border-radius: 0; background: var(--paper); color: var(--ink); font: inherit; font-size: .8rem; }
+.management-field textarea { resize: vertical; }
+.management-card__actions { display: flex; flex-wrap: wrap; gap: .6rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.management-card__actions .button { min-width: 0; padding: .65rem .8rem; font-size: .72rem; }
+.button--danger { border-color: #a65d4f; color: #8e4f44; }
+.button--danger:hover { background: #a65d4f; color: var(--white); }
+
 .about-intro { padding-block: clamp(5rem, 10vw, 9rem); }
 .about-intro__grid { display: grid; gap: 2rem; }
 .about-intro h2 { max-width: 940px; font-size: clamp(2rem, 5.5vw, 4.7rem); }
@@ -284,6 +307,9 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	.upload-layout { grid-template-columns: minmax(0, 1fr) minmax(380px, .9fr); align-items: start; gap: 5rem; }
 	.form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.upload-result { grid-column: 2; margin-top: 0; }
+	.management-layout { grid-template-columns: minmax(0, 1fr) minmax(380px, .9fr); align-items: start; gap: 5rem; }
+	.management-card__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.management-field:nth-child(2), .management-field:nth-child(3), .management-field:nth-child(8) { grid-column: span 2; }
 }
 
 @media (min-width: 1050px) {

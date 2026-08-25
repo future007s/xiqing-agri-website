@@ -23,10 +23,13 @@ export interface MediaRecord {
 	checksum: string;
 	source: 'manual_upload';
 	uploadedAt: string;
+	deletedAt: string | null;
+	deleteReason: string | null;
 }
 
 export interface R2BucketLike {
 	put(key: string, value: ArrayBuffer, options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }): Promise<unknown>;
+	delete(key: string): Promise<unknown>;
 }
 
 export interface D1PreparedLike {
@@ -73,9 +76,9 @@ export function optionsResponse(): Response {
 	return new Response(null, {
 		status: 204,
 		headers: {
-			'Access-Control-Allow-Origin': '*',
-			'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+		'Access-Control-Allow-Origin': '*',
+		'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+		'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
 		},
 	});
 }
@@ -142,5 +145,7 @@ export function mediaFromRow(row: Record<string, unknown>): MediaRecord {
 		checksum: String(row.checksum),
 		source: 'manual_upload',
 		uploadedAt: String(row.uploaded_at),
+		deletedAt: row.deleted_at ? String(row.deleted_at) : null,
+		deleteReason: row.delete_reason ? String(row.delete_reason) : null,
 	};
 }

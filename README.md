@@ -49,8 +49,10 @@ npm run preview
 
 - [`docs/media-storage-convention.md`](docs/media-storage-convention.md)：R2 目录、D1 索引、审核和备份规则。
 - [`migrations/0001_experiment_media.sql`](migrations/0001_experiment_media.sql)：D1 媒体索引表。
+- [`migrations/0002_media_management.sql`](migrations/0002_media_management.sql)：软删除、恢复和操作审计字段。
 - [`wrangler.toml.example`](wrangler.toml.example)：Worker 的 R2/D1 绑定示例；真实口令使用 Cloudflare Worker Secret。
 - `/media-upload`：手动上传页面，上传成功后生成可复制的 `media` YAML 字段。
+- `/media-manage`：管理媒体元数据、审核状态、软删除、恢复和彻底删除。
 
 实验列表、详情页与 sitemap 会在构建时自动生成。
 

@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+	title="媒体管理 | 曦清农业"
+	description="管理实验图片和视频的元数据、审核状态和删除状态。"
+	noindex
+>
+	<main class="management-page">
+		<section class="page-hero shell">
+			<div class="page-hero__heading">
+				<h1>媒体管理</h1>
+				<p>MEDIA CONTROL / D1 + R2</p>
+			</div>
+			<p class="page-hero__intro">修改说明、关联关系和审核状态；错误媒体先软删除，确认后才彻底清理 R2 文件。页面不会保存管理口令。</p>
+		</section>
+
+		<section class="management-section shell" aria-labelledby="management-title">
+			<div class="management-layout">
+				<div>
+					<p class="eyebrow">REVIEW QUEUE</p>
+					<h2 id="management-title">先读取，再修改</h2>
+					<p class="upload-copy">可以按实验编号筛选，也可以留空读取最近媒体。软删除会立即从公开实验页隐藏，但保留记录和 R2 文件，方便恢复。</p>
+					<div class="upload-rules">
+						<p><strong>修改</strong><span>只改元数据，不改变媒体 ID 和 R2 原文件。</span></p>
+						<p><strong>软删除</strong><span>隐藏记录，之后可以恢复。</span></p>
+						<p><strong>彻底删除</strong><span>同时删除 D1 记录和 R2 文件，不能恢复。</span></p>
+					</div>
+				</div>
+
+				<form id="media-manage-auth" class="upload-form">
+					<div class="form-field">
+						<label for="manage-experiment-id">实验编号</label>
+						<input id="manage-experiment-id" name="experimentId" pattern="[A-Za-z0-9_-]{1,64}" placeholder="T01-001（留空读取全部）" autocomplete="off" />
+					</div>
+					<div class="form-field">
+						<label for="manage-token">管理口令</label>
+						<input id="manage-token" name="token" type="password" required autocomplete="current-password" placeholder="MEDIA_UPLOAD_TOKEN" />
+						<small>口令只用于当前浏览器会话，不会写入实验记录或 GitHub。</small>
+					</div>
+					<button class="button button--dark" type="submit"><span>读取媒体列表</span><span aria-hidden="true">↗</span></button>
+					<p id="manage-status" class="upload-status" role="status" aria-live="polite"></p>
+				</form>
+			</div>
+
+			<section id="media-management-results" class="management-results" hidden aria-live="polite">
+				<div class="record-section__heading">
+					<p class="eyebrow">MEDIA INDEX</p>
+					<h2>已上传媒体</h2>
+				</div>
+				<p id="media-management-summary" class="management-summary"></p>
+				<div id="media-management-list" class="management-list"></div>
+			</section>
+		</section>
+	</main>
+</BaseLayout>
+
+<script src="../scripts/media-manage.ts"></script>

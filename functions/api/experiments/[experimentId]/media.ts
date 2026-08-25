@@ -19,6 +19,7 @@ export const onRequestGet = async ({ env, params }: PagesContext<MediaEnv>): Pro
 			caption, alt, visibility, review_status, object_key, mime_type, size_bytes, checksum, uploaded_at
 		FROM experiment_media
 		WHERE experiment_id = ? AND visibility = 'public' AND review_status = 'confirmed'
+			AND deleted_at IS NULL
 		ORDER BY captured_at DESC, uploaded_at DESC
 	`).bind(experimentId).all();
 

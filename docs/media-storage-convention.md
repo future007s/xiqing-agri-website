@@ -25,7 +25,7 @@ experiments/T01-001/2026-08-25/8d12...-spray-test.mp4
 
 ## 2. D1 媒体索引
 
-迁移文件：`migrations/0001_experiment_media.sql`。
+迁移文件：`migrations/0001_experiment_media.sql`、`migrations/0002_media_management.sql`。
 
 关键关联字段：
 
@@ -40,6 +40,8 @@ experiments/T01-001/2026-08-25/8d12...-spray-test.mp4
 | `visibility` | `public` 或 `private` |
 | `review_status` | `pending`、`confirmed`、`rejected` |
 | `checksum` | SHA-256，用于去重与追溯 |
+| `deleted_at` | 软删除时间；非空时不在公开页显示 |
+| `delete_reason` | 删除原因，便于复盘和恢复 |
 
 原始文件不进入 D1。D1 只保存路径、描述、类型、时间、审核和关联关系。
 
@@ -48,7 +50,7 @@ experiments/T01-001/2026-08-25/8d12...-spray-test.mp4
 ```text
 手动页面 / 采集程序
         ↓ POST /api/media/upload
-Cloudflare Pages Function 校验口令、实验编号、类型和大小
+Cloudflare Worker 校验口令、实验编号、类型和大小
         ↓
 R2 写入原文件
         ↓
@@ -87,8 +89,15 @@ AND review_status = 'confirmed'
 ## 7. 当前接口
 
 ```text
-POST /api/media/upload
-GET  /api/experiments/{experimentId}/media
+POST   /api/media/upload
+GET    /api/experiments/{experimentId}/media
+GET    /api/media?experimentId={experimentId}
+PATCH  /api/media/{mediaId}
+DELETE /api/media/{mediaId}                    # 软删除
+POST   /api/media/{mediaId}/restore
+POST   /api/media/{mediaId}/purge               # 彻底删除，需显式确认
 ```
+
+管理接口和上传接口共用 `MEDIA_UPLOAD_TOKEN`，管理页面位于 `/media-manage`。修改只更新 D1 元数据；软删除保留 R2 对象并可恢复；彻底删除会先删除 R2 对象，再删除 D1 记录，并写入 `experiment_media_audit`。
 
 自动采集程序、DTU 网关和未来 OCR 服务只需要复用这套媒体记录字段，不要另造一套图片表。
