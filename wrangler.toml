@@ -1,6 +1,5 @@
 name = "xiqing-agri-website"
 compatibility_date = "2026-08-25"
-pages_build_output_dir = "dist"
 
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"

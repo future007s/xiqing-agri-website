@@ -86,10 +86,10 @@ Build output directory: dist
 当前 Cloudflare Workers Builds 的部署命令为：
 
 ```text
-npx wrangler pages deploy dist --project-name xiqing-agri-website
+npx wrangler deploy
 ```
 
-根目录的 [`wrangler.toml`](wrangler.toml) 已写入生产环境的 R2/D1 绑定；不要把上传口令写入该文件，`MEDIA_UPLOAD_TOKEN` 只作为 Cloudflare Secret 保存。
+当前项目是 Cloudflare Workers（静态资产）服务，不是 Pages 项目，因此使用 Worker 部署命令。根目录的 [`wrangler.toml`](wrangler.toml) 已写入生产环境的 R2/D1 绑定；不要把上传口令写入该文件，`MEDIA_UPLOAD_TOKEN` 只作为 Cloudflare Secret 保存。
 
 完成首次部署后会得到一个 `*.pages.dev` 测试域名。之后每次 `git push`，Cloudflare Pages 会自动重新构建和部署。
 
