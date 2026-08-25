@@ -1,0 +1,18 @@
+name = "xiqing-agri-website"
+compatibility_date = "2026-08-25"
+pages_build_output_dir = "dist"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "xiqing-agri-media"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xiqing-agri-media"
+database_id = "0bb78b95-7d03-4735-810c-0dad95ea0b55"
+
+[vars]
+MEDIA_PUBLIC_BASE_URL = "https://media.xiqingagri.com"
+DEFAULT_TIMEZONE_OFFSET = "+08:00"
+
+# MEDIA_UPLOAD_TOKEN must be added as an encrypted Cloudflare secret.
