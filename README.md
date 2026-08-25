@@ -50,7 +50,7 @@ npm run preview
 - [`docs/media-storage-convention.md`](docs/media-storage-convention.md)：R2 目录、D1 索引、审核和备份规则。
 - [`migrations/0001_experiment_media.sql`](migrations/0001_experiment_media.sql)：D1 媒体索引表。
 - [`migrations/0002_media_management.sql`](migrations/0002_media_management.sql)：软删除、恢复和操作审计字段。
-- [`wrangler.toml.example`](wrangler.toml.example)：Worker 的 R2/D1 绑定示例；真实口令使用 Cloudflare Worker Secret。
+- [`wrangler.toml.example`](wrangler.toml.example)：可选独立 Worker 部署的 R2/D1 绑定示例；Pages 生产环境的口令和绑定在 Pages 项目设置中配置。
 - `/media-upload`：后台手动上传页面（不出现在公开导航和 sitemap），上传成功后生成可复制的 `media` YAML 字段。
 - `/media-manage`：后台管理媒体元数据、审核状态、软删除、恢复和彻底删除（不出现在公开导航和 sitemap）。
 
@@ -85,15 +85,9 @@ Build command: npm run build
 Build output directory: dist
 ```
 
-当前 Cloudflare Workers Builds 的部署命令为：
+生产环境使用 Cloudflare Pages + Pages Functions：自定义域名、静态官网、媒体 API、R2/D1 绑定和 `MEDIA_UPLOAD_TOKEN` 都在 Pages 项目 `xiqing-agri-website` 的生产设置中维护。之后每次 `git push`，Cloudflare Pages 会自动重新构建和部署。
 
-```text
-npx wrangler deploy
-```
-
-当前项目是 Cloudflare Workers（静态资产）服务，不是 Pages 项目，因此使用 Worker 部署命令。根目录的 [`wrangler.toml`](wrangler.toml) 已写入生产环境的 Worker、R2/D1 绑定；不要把上传口令写入该文件，`MEDIA_UPLOAD_TOKEN` 只作为 Cloudflare Worker Secret 保存。
-
-完成首次部署后会得到一个 `*.pages.dev` 测试域名。之后每次 `git push`，Cloudflare Pages 会自动重新构建和部署。
+仓库中的 [`src/worker.ts`](src/worker.ts) 和 [`wrangler.toml`](wrangler.toml) 只是可选的独立 Worker 适配器，不是 `xiqingagri.com` 的生产入口；如果不使用 `workers.dev`，不要在 Worker 服务设置里重复配置媒体口令。
 
 ## 绑定域名
 
