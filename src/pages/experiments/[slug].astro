@@ -17,6 +17,13 @@ const { experiment } = Astro.props;
 const { data } = experiment;
 const { Content } = await render(experiment);
 const description = `${data.id}：${data.title}。公开记录实验设计、状态与真实测量结果。`;
+const eventStatusLabels = { planned: '计划', completed: '已完成', failed: '失败', paused: '暂停' };
+const telemetryStatusLabels = { observed: '实测', partial: '部分实测', pending: '待同步', invalid: '无效' };
+const qualityLabels = { observed: '实测', estimated: '估算', pending: '待确认', invalid: '无效' };
+const severityLabels = { info: '记录', attention: '注意', critical: '严重' };
+const publicMedia = data.media.filter((item) => item.visibility === 'public' && item.reviewStatus === 'confirmed');
+const publicObservations = data.observations.filter((item) => item.reviewStatus === 'confirmed');
+const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'confirmed');
 ---
 
 <ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description}>
@@ -46,4 +53,93 @@ const description = `${data.id}：${data.title}。公开记录实验设计、状
 			<ul><li>事实 &gt; 宣传</li><li>实测 &gt; 推测</li><li>未知 ≠ 0</li><li>设计值 ≠ 实测值</li><li>失败数据不删除</li></ul>
 		</aside>
 	</section>
+
+	{data.objectives.length > 0 && (
+		<section class="record-section shell" aria-labelledby="objectives-title">
+			<div class="record-section__heading"><p class="eyebrow">EXPERIMENT SCOPE</p><h2 id="objectives-title">实验目标</h2></div>
+			<ol class="record-objectives">
+				{data.objectives.map((objective, index) => <li><span>{String(index + 1).padStart(2, '0')}</span>{objective}</li>)}
+			</ol>
+		</section>
+	)}
+
+	{data.sensors.length > 0 && (
+		<section class="record-section record-section--tint" aria-labelledby="sensors-title">
+			<div class="shell">
+				<div class="record-section__heading"><p class="eyebrow">INSTRUMENTATION</p><h2 id="sensors-title">传感器与数据源</h2></div>
+				<div class="record-table-wrap">
+					<table class="record-table">
+						<thead><tr><th scope="col">编号</th><th scope="col">传感器</th><th scope="col">协议</th><th scope="col">位置</th><th scope="col">单位</th><th scope="col">状态</th></tr></thead>
+						<tbody>
+							{data.sensors.map((sensor) => <tr><th scope="row">{sensor.id}</th><td>{sensor.name}<small>{sensor.kind}</small></td><td>{sensor.protocol ?? '待配置'}</td><td>{sensor.location ?? '待配置'}</td><td>{sensor.unit ?? '—'}</td><td><span class="record-badge">{sensor.status}</span></td></tr>)}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	)}
+
+	{data.events.length > 0 && (
+		<section class="record-section shell" aria-labelledby="events-title">
+			<div class="record-section__heading"><p class="eyebrow">EVENT LOG</p><h2 id="events-title">实验事件</h2></div>
+			<ol class="record-timeline">
+				{data.events.map((event) => <li>
+					<div class="record-timeline__meta"><span>{event.id}</span><time datetime={event.at}>{event.at}</time></div>
+					<div><h3>{event.title}</h3><p>{event.summary ?? '暂无事件说明。'}</p></div>
+					<div class="record-timeline__status"><span>{event.type}</span><span>{eventStatusLabels[event.status]}</span>{event.operator && <span>{event.operator}</span>}</div>
+				</li>)}
+			</ol>
+		</section>
+	)}
+
+	{data.telemetry.length > 0 && (
+		<section class="record-section record-section--dark" aria-labelledby="telemetry-title">
+			<div class="shell">
+				<div class="record-section__heading record-section__heading--light"><p class="eyebrow">TELEMETRY SNAPSHOTS</p><h2 id="telemetry-title">自动采集摘要</h2></div>
+				<div class="telemetry-list">
+					{data.telemetry.map((snapshot) => <article class="telemetry-snapshot">
+						<header><div><time datetime={snapshot.at}>{snapshot.at}</time><span>{snapshot.source}</span></div><span class="record-badge record-badge--dark">{telemetryStatusLabels[snapshot.status]}</span></header>
+						<dl>{snapshot.metrics.map((metric) => <div><dt>{metric.label}<small>{metric.key}</small></dt><dd>{metric.value}{metric.unit && <span>{metric.unit}</span>}<small>{qualityLabels[metric.quality]}</small></dd></div>)}</dl>
+					</article>)}
+				</div>
+			</div>
+		</section>
+	)}
+
+	{publicObservations.length > 0 && (
+		<section class="record-section record-section--tint" aria-labelledby="observations-title">
+			<div class="shell">
+				<div class="record-section__heading"><p class="eyebrow">FIELD OBSERVATIONS</p><h2 id="observations-title">人工观察记录</h2></div>
+				<div class="observation-list">
+					{publicObservations.map((observation) => <article class="observation-card">
+						<header><span>{observation.category}</span><time datetime={observation.at}>{observation.at}</time><span class:list={['record-badge', `record-badge--${observation.severity}`]}>{severityLabels[observation.severity]}</span></header>
+						<h3>{observation.subject}</h3><p>{observation.summary}</p>{observation.detail && <p class="observation-card__detail">{observation.detail}</p>}
+					</article>)}
+				</div>
+			</div>
+		</section>
+	)}
+
+	{publicAnalyses.length > 0 && (
+		<section class="record-section shell" aria-labelledby="analysis-title">
+			<div class="record-section__heading"><p class="eyebrow">PLANT ANALYSIS</p><h2 id="analysis-title">植物与图像分析</h2></div>
+			<div class="analysis-list">
+				{publicAnalyses.map((analysis) => <article class="analysis-card"><header><span>{analysis.method}</span><time datetime={analysis.at}>{analysis.at}</time></header><h3>{analysis.subject}</h3><p>{analysis.result}</p>{analysis.confidence != null && <small>置信度 {Math.round(analysis.confidence * 100)}%</small>}</article>)}
+			</div>
+		</section>
+	)}
+
+	{publicMedia.length > 0 && (
+		<section class="record-section record-section--tint" aria-labelledby="media-title">
+			<div class="shell">
+				<div class="record-section__heading"><p class="eyebrow">FIELD MEDIA</p><h2 id="media-title">照片与视频</h2></div>
+				<div class="media-grid">
+					{publicMedia.map((item) => <figure class:list={['media-card', `media-card--${item.kind}`]}>
+						{item.kind === 'image' ? <img src={item.src} alt={item.alt} loading="lazy" /> : <video controls preload="metadata" poster={item.poster}><source src={item.src} /></video>}
+						<figcaption><div><strong>{item.caption}</strong><span>{item.at}</span></div>{(item.eventId || item.plantId) && <small>{item.eventId && `事件 ${item.eventId}`}{item.eventId && item.plantId && ' · '}{item.plantId && `植物 ${item.plantId}`}</small>}</figcaption>
+					</figure>)}
+				</div>
+			</div>
+		</section>
+	)}
 </ExperimentLayout>

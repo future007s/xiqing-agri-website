@@ -36,10 +36,12 @@ npm run preview
 
 ## 新增实验
 
-1. 复制 `src/content/experiments/t01-001.md`。
-2. 按实验编号重命名，例如 `src/content/experiments/t01-002.md`。
-3. 更新 frontmatter 与正文。
+1. 优先复制 [`docs/experiment-record-template.md`](docs/experiment-record-template.md) 中的 YAML 模板。
+2. 按实验编号保存，例如 `src/content/experiments/t01-002.md`。
+3. 更新 frontmatter 与正文；事件、遥测摘要、人工观察、OCR 和媒体都使用同一个 `id` 关联。
 4. 未实测的数值字段留空，不要写 `0`。
+
+详情页会自动渲染实验目标、传感器、事件时间线、自动采集摘要、人工观察、植物分析和已确认的图片/视频。
 
 实验列表、详情页与 sitemap 会在构建时自动生成。
 
