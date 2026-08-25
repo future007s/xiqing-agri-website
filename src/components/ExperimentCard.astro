@@ -1,0 +1,28 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { displayValue, formatDate, statusLabels } from '../lib/experiments';
+
+interface Props {
+	experiment: CollectionEntry<'experiments'>;
+}
+
+const { experiment } = Astro.props;
+const { data } = experiment;
+---
+
+<article class="experiment-card">
+	<a href={`/experiments/${experiment.id}`} aria-label={`查看实验 ${data.id}：${data.title}`}>
+		<div class="experiment-card__meta">
+			<span>{data.id}</span>
+			<span class:list={['badge', `badge--${data.status}`]}>{statusLabels[data.status]}</span>
+		</div>
+		<h3>{data.title}</h3>
+		<dl>
+			<div><dt>日期</dt><dd>{formatDate(data.startDate)}</dd></div>
+			<div><dt>塔型</dt><dd>{data.tower}</dd></div>
+			<div><dt>作物</dt><dd>{data.plant}</dd></div>
+			<div><dt>产量</dt><dd>{displayValue(data.yieldKg, 'kg')}</dd></div>
+		</dl>
+		<span class="experiment-card__arrow" aria-hidden="true">↗</span>
+	</a>
+</article>

@@ -1,0 +1,49 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import MetricCard from '../../components/MetricCard.astro';
+import ExperimentLayout from '../../layouts/ExperimentLayout.astro';
+import { displayValue, statusLabels } from '../../lib/experiments';
+
+export async function getStaticPaths() {
+	const experiments = await getCollection('experiments');
+	return experiments.map((experiment) => ({ params: { slug: experiment.id }, props: { experiment } }));
+}
+
+interface Props {
+	experiment: CollectionEntry<'experiments'>;
+}
+
+const { experiment } = Astro.props;
+const { data } = experiment;
+const { Content } = await render(experiment);
+const description = `${data.id}：${data.title}。公开记录实验设计、状态与真实测量结果。`;
+---
+
+<ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description}>
+	<section class="record-data section--dark" aria-labelledby="data-title">
+		<div class="shell">
+			<div class="section-heading section-heading--light section-heading--row">
+				<div><p class="eyebrow">MEASUREMENTS</p><h2 id="data-title">数据摘要</h2></div>
+				<p class="data-note">未测 ≠ 0 · 空值统一显示“待实测”</p>
+			</div>
+			<div class="metric-grid metric-grid--record">
+				<MetricCard label="状态" value={statusLabels[data.status]} kind="当前状态" />
+				<MetricCard label="塔高" value={displayValue(data.towerHeightM, 'm')} kind="设计值" />
+				<MetricCard label="设计株数" value={displayValue(data.designPlants)} kind="设计值" />
+				<MetricCard label="作物" value={data.plant} kind="计划值" />
+				<MetricCard label="成活率" value={displayValue(data.survivalRate, '%')} kind="实测值" pending={data.survivalRate == null} />
+				<MetricCard label="产量" value={displayValue(data.yieldKg, 'kg')} kind="实测值" pending={data.yieldKg == null} />
+				<MetricCard label="能耗" value={displayValue(data.electricityKwh, 'kWh')} kind="实测值" pending={data.electricityKwh == null} />
+				<MetricCard label="用水量" value={displayValue(data.waterL, 'L')} kind="实测值" pending={data.waterL == null} />
+				<MetricCard label="成本" value={displayValue(data.costCny, 'CNY')} kind="实测值" pending={data.costCny == null} />
+			</div>
+		</div>
+	</section>
+	<section class="record-body shell">
+		<article class="prose"><Content /></article>
+		<aside class="record-aside" aria-label="数据口径">
+			<p class="eyebrow">DATA RULES</p>
+			<ul><li>事实 &gt; 宣传</li><li>实测 &gt; 推测</li><li>未知 ≠ 0</li><li>设计值 ≠ 实测值</li><li>失败数据不删除</li></ul>
+		</aside>
+	</section>
+</ExperimentLayout>

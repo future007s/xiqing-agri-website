@@ -1,0 +1,15 @@
+---
+interface Props {
+	label: string;
+	value: string;
+	kind: string;
+	pending?: boolean;
+}
+
+const { label, value, kind, pending = false } = Astro.props;
+---
+
+<article class:list={['metric-card', { 'metric-card--pending': pending }]}>
+	<div><span>{label}</span><small>{kind}</small></div>
+	<strong>{value}</strong>
+</article>
