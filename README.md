@@ -9,9 +9,9 @@
 - Astro
 - TypeScript（strict）
 - Markdown Content Collections
-- 静态生成，无数据库、无服务端运行时
+- 静态生成，媒体 API 由 Cloudflare Worker 运行
 
-媒体上传能力通过 Cloudflare Pages Functions 提供：R2 保存图片/视频，D1 保存媒体索引；未绑定这两个资源时，官网仍可作为纯静态站点运行。
+媒体上传能力通过 Cloudflare Worker 提供：Worker 负责媒体 API 和 Astro 静态资产，R2 保存图片/视频，D1 保存媒体索引；未绑定这两个资源时，官网仍可作为纯静态站点运行。
 
 ## 本地启动
 
@@ -49,7 +49,7 @@ npm run preview
 
 - [`docs/media-storage-convention.md`](docs/media-storage-convention.md)：R2 目录、D1 索引、审核和备份规则。
 - [`migrations/0001_experiment_media.sql`](migrations/0001_experiment_media.sql)：D1 媒体索引表。
-- [`wrangler.toml.example`](wrangler.toml.example)：R2/D1 绑定示例；真实口令使用 Cloudflare Pages Secret。
+- [`wrangler.toml.example`](wrangler.toml.example)：Worker 的 R2/D1 绑定示例；真实口令使用 Cloudflare Worker Secret。
 - `/media-upload`：手动上传页面，上传成功后生成可复制的 `media` YAML 字段。
 
 实验列表、详情页与 sitemap 会在构建时自动生成。
@@ -89,7 +89,7 @@ Build output directory: dist
 npx wrangler deploy
 ```
 
-当前项目是 Cloudflare Workers（静态资产）服务，不是 Pages 项目，因此使用 Worker 部署命令。根目录的 [`wrangler.toml`](wrangler.toml) 已写入生产环境的 R2/D1 绑定；不要把上传口令写入该文件，`MEDIA_UPLOAD_TOKEN` 只作为 Cloudflare Secret 保存。
+当前项目是 Cloudflare Workers（静态资产）服务，不是 Pages 项目，因此使用 Worker 部署命令。根目录的 [`wrangler.toml`](wrangler.toml) 已写入生产环境的 Worker、R2/D1 绑定；不要把上传口令写入该文件，`MEDIA_UPLOAD_TOKEN` 只作为 Cloudflare Worker Secret 保存。
 
 完成首次部署后会得到一个 `*.pages.dev` 测试域名。之后每次 `git push`，Cloudflare Pages 会自动重新构建和部署。
 

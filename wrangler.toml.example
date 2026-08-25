@@ -1,9 +1,13 @@
 name = "xiqing-agri-website"
 compatibility_date = "2026-08-25"
-pages_build_output_dir = "dist"
+main = "src/worker.ts"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
 
 # Copy this file to wrangler.toml only after creating the named resources.
-# The Pages Git integration can also configure these bindings in the dashboard.
+# The Worker entry routes media APIs and serves the Astro dist directory.
 
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
@@ -20,5 +24,5 @@ preview_database_id = "REPLACE_WITH_D1_PREVIEW_DATABASE_ID"
 MEDIA_PUBLIC_BASE_URL = "https://media.xiqingagri.com"
 DEFAULT_TIMEZONE_OFFSET = "+08:00"
 
-# Set this as an encrypted secret in Cloudflare Pages, not in this file:
+# Set this as an encrypted Worker secret, not in this file:
 # MEDIA_UPLOAD_TOKEN
