@@ -98,6 +98,6 @@ POST   /api/media/{mediaId}/restore
 POST   /api/media/{mediaId}/purge               # 彻底删除，需显式确认
 ```
 
-管理接口和上传接口共用 `MEDIA_UPLOAD_TOKEN`，管理页面位于 `/media-manage`。修改只更新 D1 元数据；软删除保留 R2 对象并可恢复；彻底删除会先删除 R2 对象，再删除 D1 记录，并写入 `experiment_media_audit`。
+管理接口和上传接口共用 `MEDIA_UPLOAD_TOKEN`，管理页面位于 `/media-manage`。它不出现在公开导航、sitemap，并通过 `robots.txt` 禁止抓取；这不是页面鉴权，真正的读写操作仍由 API 口令保护。修改只更新 D1 元数据；软删除保留 R2 对象并可恢复；彻底删除会先删除 R2 对象，再删除 D1 记录，并写入 `experiment_media_audit`。
 
 自动采集程序、DTU 网关和未来 OCR 服务只需要复用这套媒体记录字段，不要另造一套图片表。

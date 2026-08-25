@@ -27,7 +27,7 @@ const socialImage = new URL(image, Astro.site);
 		<link rel="canonical" href={canonical} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="theme-color" content="#f2f0e9" />
-		{noindex && <meta name="robots" content="noindex" />}
+		{noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
 		<meta property="og:type" content={type} />
 		<meta property="og:site_name" content="曦清农业 XIQING AGRI" />
 		<meta property="og:locale" content="zh_CN" />

@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /media-upload
+Disallow: /media-manage
+Disallow: /api/
 
 Sitemap: https://xiqingagri.com/sitemap.xml
