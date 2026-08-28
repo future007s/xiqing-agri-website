@@ -69,7 +69,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 
 .hero { min-height: calc(100svh - 74px); display: grid; grid-template-rows: auto 1fr auto; padding-block: 1.2rem; }
 .hero__topline, .hero__index { display: flex; justify-content: space-between; font-size: .58rem; color: var(--muted); }
-.hero__body { display: grid; align-items: end; gap: 3.5rem; padding-block: 11vh 8vh; }
+.hero__body { display: grid; align-content: center; align-items: end; gap: 3.5rem; padding-block: clamp(3rem, 8vh, 6rem); }
 .eyebrow { margin-bottom: 1.25rem; font-size: .62rem; font-weight: 700; color: var(--muted); }
 .hero h1 { margin-bottom: 1.2rem; font-size: clamp(4.2rem, 20vw, 12.5rem); font-weight: 800; letter-spacing: -.085em; }
 .hero h1 span { display: block; font-weight: 320; letter-spacing: -.075em; }
