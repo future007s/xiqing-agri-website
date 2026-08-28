@@ -67,7 +67,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 }
 .language-switch:hover { background: var(--ink); color: var(--white); }
 
-.hero { min-height: calc(100svh - 74px); display: grid; grid-template-rows: auto 1fr auto; padding-block: 1.2rem; }
+.hero { min-height: min(calc(100svh - 74px), 960px); display: grid; grid-template-rows: auto 1fr auto; padding-block: 1.2rem; }
 .hero__topline, .hero__index { display: flex; justify-content: space-between; font-size: .58rem; color: var(--muted); }
 .hero__body { display: grid; align-content: center; align-items: end; gap: 3.5rem; padding-block: clamp(3rem, 8vh, 6rem); }
 .eyebrow { margin-bottom: 1.25rem; font-size: .62rem; font-weight: 700; color: var(--muted); }
