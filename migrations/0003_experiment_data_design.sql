@@ -1,13 +1,12 @@
--- Website D1 public trace read model (design draft; not deployed).
+-- 官网 D1 公开追溯读模型（设计草案；尚未部署）。
 --
--- PostgreSQL + TimescaleDB is the production traceability source of truth.
--- D1 only stores reviewed, deliberately published summaries for the website.
--- It must not become the high-frequency telemetry store or a control path.
+-- PostgreSQL + TimescaleDB 是生产追溯事实源。
+-- D1 只保存经过审核并明确批准发布到官网的摘要。
+-- D1 不得成为高频遥测存储或控制路径。
 
 PRAGMA foreign_keys = ON;
 
--- Experiment remains an optional R&D context. It is not the parent identity
--- for production, harvest, packaging, inspection, recall, or order facts.
+-- 实验仍是可选的研发上下文，不是生产、采收、包装、检验、召回或订单事实的父身份。
 CREATE TABLE IF NOT EXISTS experiments (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -25,9 +24,8 @@ CREATE TABLE IF NOT EXISTS experiments (
 CREATE INDEX IF NOT EXISTS experiments_status_idx
   ON experiments (status, start_date DESC);
 
--- One row is the approved public projection of a ProductionBatch. Internal
--- UUIDs are never exposed. business_id remains stable; display_id may be
--- changed without breaking internal trace relationships.
+-- 每行是一个经批准的生产批次公开投影。内部 UUID 永不对外暴露；
+-- `business_id` 保持稳定，`display_id` 可在不破坏内部追溯关系的前提下更改。
 CREATE TABLE IF NOT EXISTS published_production_batches (
   business_id TEXT PRIMARY KEY,
   display_id TEXT NOT NULL,
@@ -57,9 +55,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS published_production_batches_display_idx
 CREATE INDEX IF NOT EXISTS published_production_batches_status_idx
   ON published_production_batches (status, published_at DESC);
 
--- Language-specific copy is kept outside the batch identity. Chinese and
--- English therefore share one lineage record instead of competing for the
--- same business key or drifting into separate batches.
+-- 各语言文案与批次身份分开保存。中英文共享同一条血缘记录，
+-- 不会争用同一业务键或逐渐变成两个独立批次。
 CREATE TABLE IF NOT EXISTS published_production_batch_localizations (
   production_batch_id TEXT NOT NULL,
   locale TEXT NOT NULL CHECK (locale IN ('zh-CN', 'en')),
@@ -78,8 +75,7 @@ CREATE TABLE IF NOT EXISTS published_production_batch_localizations (
   UNIQUE (locale, slug)
 );
 
--- Time-valid public topology labels. These are projections of production
--- relationships, not a second asset registry.
+-- 带时间有效性的公开拓扑标签。它们是生产关系的投影，不是第二套资产清册。
 CREATE TABLE IF NOT EXISTS published_batch_topology (
   id TEXT PRIMARY KEY,
   production_batch_id TEXT NOT NULL,
@@ -97,8 +93,8 @@ CREATE TABLE IF NOT EXISTS published_batch_topology (
 CREATE UNIQUE INDEX IF NOT EXISTS published_batch_topology_unique_idx
   ON published_batch_topology (production_batch_id, entity_type, entity_business_id, valid_from);
 
--- Reviewed production events. Corrections are represented by a new event that
--- references corrects_event_id; published history is never overwritten.
+-- 已审核的生产事件。更正通过引用 `corrects_event_id` 的新事件表达；
+-- 已发布历史绝不覆盖。
 CREATE TABLE IF NOT EXISTS published_trace_events (
   id TEXT PRIMARY KEY,
   production_batch_id TEXT NOT NULL,
@@ -122,8 +118,8 @@ CREATE TABLE IF NOT EXISTS published_trace_events (
 CREATE INDEX IF NOT EXISTS published_trace_events_batch_time_idx
   ON published_trace_events (production_batch_id, occurred_at DESC);
 
--- Only low-frequency, reviewed summaries are copied here. The real sensor
--- installation, raw samples, aggregates and provenance stay in TimescaleDB.
+-- 此处只复制已审核的低频摘要。真实传感器安装关系、原始样本、
+-- 聚合数据和来源信息保留在 TimescaleDB。
 CREATE TABLE IF NOT EXISTS published_measurement_summaries (
   id TEXT PRIMARY KEY,
   production_batch_id TEXT NOT NULL,
@@ -157,8 +153,8 @@ CREATE TABLE IF NOT EXISTS published_measurement_summaries (
 CREATE INDEX IF NOT EXISTS published_measurements_batch_time_idx
   ON published_measurement_summaries (production_batch_id, metric_key, measured_at DESC);
 
--- Inspection scope is explicit. A batch result cannot silently become a
--- single-plant result or expand outside its lineage.
+-- 检验适用范围必须明确。批次结果不得静默变成单株结果，
+-- 也不得扩展到其血缘范围以外。
 CREATE TABLE IF NOT EXISTS published_inspections (
   id TEXT PRIMARY KEY,
   production_batch_id TEXT NOT NULL,
@@ -179,8 +175,8 @@ CREATE TABLE IF NOT EXISTS published_inspections (
 CREATE INDEX IF NOT EXISTS published_inspections_batch_time_idx
   ON published_inspections (production_batch_id, inspected_at DESC);
 
--- HarvestBatch is separate from ProductionBatch. Sources are many-to-many so
--- cross-batch harvests and partial harvests remain visible.
+-- 采收批次与生产批次相互独立。来源采用多对多关系，
+-- 使跨批采收和部分采收保持可见。
 CREATE TABLE IF NOT EXISTS published_harvest_batches (
   business_id TEXT PRIMARY KEY,
   display_id TEXT NOT NULL,
@@ -217,7 +213,7 @@ CREATE TABLE IF NOT EXISTS published_harvest_sources (
 CREATE UNIQUE INDEX IF NOT EXISTS published_harvest_sources_unique_idx
   ON published_harvest_sources (harvest_batch_id, production_batch_id, source_resolution);
 
--- Certificates are versioned projections with an explicit declared scope.
+-- 合格证明是带版本并具有明确声明范围的公开投影。
 CREATE TABLE IF NOT EXISTS published_certificates (
   id TEXT PRIMARY KEY,
   production_batch_id TEXT NOT NULL,

@@ -65,8 +65,8 @@ npm run preview
 - 中文入口：`/trace`、`/trace/{productionBatchId}`；
 - 英文入口：`/en/trace`、`/en/trace/{productionBatchId}`；
 - 中文内容位于 `src/content/trace-batches/`，英文内容位于 `src/content/trace-batches-en/`；同一批次两份文件使用相同业务 ID；
-- 当前只实现静态、只读的 ProductionBatch 公开页，分开呈现生产事件、共享测量、检测、证明和 HarvestBatch 血缘；
-- 未实现二维码 Token、订单查询、单株公开页、召回后台或写入 API，也未部署 D1 `0003` 草案。
+- 当前只实现静态、只读的生产批次公开页，分开呈现生产事件、共享测量、检测、证明和采收批次血缘；
+- 未实现二维码访问令牌、订单查询、单株公开页、召回后台或写入接口，也未部署 D1 `0003` 草案。
 
 完整生产事实的结构基线位于上级架构目录 `database/traceability_v1_schema.sql`。PostgreSQL + TimescaleDB 是事实源；D1 和 Astro 内容只保存经过审核的公开投影。
 
@@ -79,7 +79,7 @@ npm run preview
 
 ### 自动采集与追溯数据状态
 
-`experimentId` 只标识研发实验，`productionBatchId` 标识生产管理分组，两者通过可选关系关联。传感器安装、原始遥测和聚合数据应进入 PostgreSQL + TimescaleDB，并绑定真实 Zone、NutrientLoop、Tower 或测点范围；D1 只接收经审核的低频公开摘要。ESP32 Ethernet MQTT、可选 MQTT-DTU、主数据库和遥测发布链尚未接通。P1/P2/EC 仍由 ESP32 作为安全总线唯一 Modbus 主站采集，DTU 只接独立环境总线或作备用上报。
+`experimentId` 只标识研发实验，`productionBatchId` 标识生产管理分组，两者通过可选关系关联。传感器安装、原始遥测和聚合数据应进入 PostgreSQL + TimescaleDB，并绑定真实生产区域、营养液回路、种植塔或测点范围；D1 只接收经审核的低频公开摘要。ESP32 以太网 MQTT、可选 MQTT-DTU、主数据库和遥测发布链尚未接通。P1/P2/EC 仍由 ESP32 作为安全总线唯一 Modbus 主站采集，DTU 只接独立环境总线或作备用上报。
 
 支持的状态：
 

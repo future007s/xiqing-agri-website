@@ -51,6 +51,15 @@ const labels = isEnglish ? {
 	members: 'Member resolution',
 	memberCount: 'Declared members',
 	unknown: 'Pending',
+	lineageEyebrow: 'REVERSIBLE LINEAGE',
+	productionBatch: 'ProductionBatch',
+	harvestBatch: 'HarvestBatch',
+	packageBatch: 'PackageBatch',
+	packageOrder: 'Package / Order',
+	productionEyebrow: 'PRODUCTION RECORDS',
+	measurementEyebrow: 'MEASUREMENT SCOPE',
+	inspectionEyebrow: 'INSPECTION SCOPE',
+	harvestEyebrow: 'HARVEST LINEAGE',
 } : {
 	back: '全部追溯记录',
 	businessId: '业务 ID',
@@ -68,13 +77,22 @@ const labels = isEnglish ? {
 	lineageNote: '每个阶段保留独立身份。未来采收或包装只会追加下游血缘，不会改写生产批次。',
 	production: '生产事件',
 	measurements: '共享测量',
-	measurementsNote: '区域、塔体和营养液回路数据必须标为共享暴露，绝不伪造成单株读数。',
+	measurementsNote: '生产区域、种植塔和营养液回路数据必须标为共享暴露，绝不伪造成单株读数。',
 	inspections: '检测与证明',
 	harvests: '采收批次',
 	experiment: '研发上下文',
 	members: '成员分辨率',
 	memberCount: '已声明成员数',
 	unknown: '待记录',
+	lineageEyebrow: '可逆追溯血缘',
+	productionBatch: '生产批次',
+	harvestBatch: '采收批次',
+	packageBatch: '包装批次',
+	packageOrder: '包装单元 / 订单',
+	productionEyebrow: '生产记录',
+	measurementEyebrow: '测量适用范围',
+	inspectionEyebrow: '检验适用范围',
+	harvestEyebrow: '采收血缘',
 };
 const towerLabel = data.towers.length > 0 ? data.towers.map((item) => item.label).join('、') : labels.pending;
 const inspectionLabel = data.inspections.length > 0
@@ -119,33 +137,33 @@ const inspectionLabel = data.inspections.length > 0
 
 		<section class="record-section record-section--dark" aria-labelledby="lineage-title">
 			<div class="shell">
-				<div class="record-section__heading record-section__heading--light"><p class="eyebrow">REVERSIBLE LINEAGE</p><h2 id="lineage-title">{labels.lineage}</h2><p>{labels.lineageNote}</p></div>
+				<div class="record-section__heading record-section__heading--light"><p class="eyebrow">{labels.lineageEyebrow}</p><h2 id="lineage-title">{labels.lineage}</h2><p>{labels.lineageNote}</p></div>
 				<ol class="trace-lineage">
-					<li class="is-known"><span>01</span><strong>ProductionBatch</strong><small>{data.displayId}</small></li>
-					<li class:list={{ 'is-known': data.harvestBatches.length > 0 }}><span>02</span><strong>HarvestBatch</strong><small>{data.harvestBatches[0]?.displayId ?? labels.pending}</small></li>
-					<li><span>03</span><strong>PackageBatch</strong><small>{labels.pending}</small></li>
-					<li><span>04</span><strong>Package / Order</strong><small>{labels.pending}</small></li>
+					<li class="is-known"><span>01</span><strong>{labels.productionBatch}</strong><small>{data.displayId}</small></li>
+					<li class:list={{ 'is-known': data.harvestBatches.length > 0 }}><span>02</span><strong>{labels.harvestBatch}</strong><small>{data.harvestBatches[0]?.displayId ?? labels.pending}</small></li>
+					<li><span>03</span><strong>{labels.packageBatch}</strong><small>{labels.pending}</small></li>
+					<li><span>04</span><strong>{labels.packageOrder}</strong><small>{labels.pending}</small></li>
 				</ol>
 			</div>
 		</section>
 
 		<section class="record-section shell" aria-labelledby="production-title">
-			<div class="record-section__heading"><p class="eyebrow">PRODUCTION RECORDS</p><h2 id="production-title">{labels.production}</h2></div>
+			<div class="record-section__heading"><p class="eyebrow">{labels.productionEyebrow}</p><h2 id="production-title">{labels.production}</h2></div>
 			{data.productionRecords.length > 0 ? <ol class="record-timeline">{data.productionRecords.map((record) => <li><div class="record-timeline__meta"><span>{record.id}</span><time datetime={record.at}>{record.at}</time></div><div><h3>{record.title}</h3><p>{record.summary}</p></div><div class="record-timeline__status"><span>{record.type}</span><span>{resolutions[record.resolution]}</span><span>{record.sourceScope}</span></div></li>)}</ol> : <p class="trace-empty">{labels.none}</p>}
 		</section>
 
 		<section class="record-section record-section--tint" aria-labelledby="measurements-title">
-			<div class="shell"><div class="record-section__heading"><p class="eyebrow">MEASUREMENT SCOPE</p><h2 id="measurements-title">{labels.measurements}</h2><p>{labels.measurementsNote}</p></div>
+			<div class="shell"><div class="record-section__heading"><p class="eyebrow">{labels.measurementEyebrow}</p><h2 id="measurements-title">{labels.measurements}</h2><p>{labels.measurementsNote}</p></div>
 			{data.sharedMeasurements.length > 0 ? <div class="trace-measurements">{data.sharedMeasurements.map((measurement) => <article><header><span>{measurement.sourceId}</span><time datetime={measurement.at}>{measurement.at}</time></header><h3>{measurement.label}</h3><p>{measurement.value}{measurement.unit && ` ${measurement.unit}`}</p><small>{resolutions[measurement.resolution]} · {measurement.sourceScope} · {measurement.quality}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}</div>
 		</section>
 
 		<section class="record-section shell" aria-labelledby="inspection-title">
-			<div class="record-section__heading"><p class="eyebrow">INSPECTION SCOPE</p><h2 id="inspection-title">{labels.inspections}</h2></div>
+			<div class="record-section__heading"><p class="eyebrow">{labels.inspectionEyebrow}</p><h2 id="inspection-title">{labels.inspections}</h2></div>
 			{data.inspections.length + data.certificates.length > 0 ? <div class="trace-audit-grid">{data.inspections.map((item) => <article><span>{item.id}</span><h3>{item.type}</h3><p>{item.summary}</p><small>{item.scope} · {item.result} · {item.at}</small></article>)}{data.certificates.map((item) => <article><span>{item.id}</span><h3>{item.type}</h3><p>{item.scope}</p><small>{item.status} · {formatTraceDate(item.issuedAt, locale)}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}
 		</section>
 
 		<section class="record-section record-section--tint" aria-labelledby="harvest-title">
-			<div class="shell"><div class="record-section__heading"><p class="eyebrow">HARVEST LINEAGE</p><h2 id="harvest-title">{labels.harvests}</h2></div>
+			<div class="shell"><div class="record-section__heading"><p class="eyebrow">{labels.harvestEyebrow}</p><h2 id="harvest-title">{labels.harvests}</h2></div>
 			{data.harvestBatches.length > 0 ? <div class="trace-audit-grid">{data.harvestBatches.map((item) => <article><span>{item.displayId}</span><h3>{item.id}</h3><p>{item.quantityValue ?? labels.unknown}{item.quantityUnit && ` ${item.quantityUnit}`}</p><small>{resolutions[item.sourceResolution]} · {item.status} · {formatTraceDate(item.harvestedAt, locale)}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}</div>
 		</section>
 	</main>

@@ -5,7 +5,7 @@
 原则：
 
 - `id` 是实验上下文的唯一关联键，实验内事件、图片、视频和 OCR 可通过它关联；它不是生产、采收、包装和订单的万能主键。
-- 实验进入实际生产时用 `productionBatchId` 显式关联 ProductionBatch；一个实验与多个生产批次的关系应进入主数据库关系模型，不能复制或拼接编号代替。
+- 实验进入实际生产时用 `productionBatchId` 显式关联生产批次；一个实验与多个生产批次的关系应进入主数据库关系模型，不能复制或拼接编号代替。
 - 时间统一使用 ISO 8601，例如 `2026-08-25T14:30:00+08:00`。
 - 不确定的数值留空，不要写 `0`；没有数据和测得为零不是一回事。
 - 原始遥测不可覆盖；修正值应产生新的记录并保留质量状态。
@@ -183,7 +183,7 @@ featured: false
 
 ## 接口写入约定
 
-实验接口使用 `experimentId`（数据库列名为 `experiment_id`）定位实验上下文；生产事实必须使用相应的 Position、PlantInstance、ProductionBatch、HarvestBatch 或 PackageBatch 身份，不能只接收 `experimentId`：
+实验接口使用 `experimentId`（数据库列名为 `experiment_id`）定位实验上下文；生产事实必须使用相应的种植孔位、植株实例、生产批次、采收批次或包装批次身份，不能只接收 `experimentId`：
 
 ```text
 GET  /api/experiments/{experimentId}
@@ -205,7 +205,7 @@ GET /api/experiments/{experimentId}/media
 
 ## 自动采集数据边界
 
-- `experiments` 保存实验身份；传感器是长期设备，通过带有效期的 SensorInstallation 绑定到真实测点和 MeasurementScope，不随实验重建身份。
+- `experiments` 保存实验身份；传感器是长期设备，通过带有效期的传感器安装关系绑定到真实测点和测量适用范围，不随实验重建身份。
 - 连续采集的原始数据进入 PostgreSQL + TimescaleDB，至少保留安装来源、测量范围、测量时间、指标、数值、单位、质量状态和原始 payload。
 - 原始样本只追加；修正数据新增记录并引用原记录，不覆盖历史。
 - 分钟、小时、日摘要在主库生成；只有经审核、带 `resolution`、`source_scope_type` 和 `source_scope_id` 的低频摘要才可发布到 D1 或 Markdown。
