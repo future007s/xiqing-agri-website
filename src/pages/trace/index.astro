@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import TraceBatchCard from '../../components/TraceBatchCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { sortTraceBatchesNewestFirst } from '../../lib/traceability';
+
+const batches = (await getCollection('traceBatches')).sort(sortTraceBatchesNewestFirst);
+---
+
+<BaseLayout
+	title="产品追溯 | 曦清农业 XIQING AGRI"
+	description="按生产批次查看曦清农业公开的来源、生产范围、共享测量、检测和采收血缘；未知数据不会用 0 或设计值填补。"
+	alternatePath="/en/trace"
+>
+	<main>
+		<header class="page-hero shell">
+			<p class="eyebrow">TRACEABILITY RECORDS</p>
+			<div class="page-hero__heading"><h1>产品追溯</h1><p>{String(batches.length).padStart(2, '0')} BATCHES</p></div>
+			<p class="page-hero__intro">从生产批次开始建立可逆血缘。物理孔位、植株、采收批次和包装批次保持独立身份；共享环境数据不会伪造成单株测量。</p>
+		</header>
+		<section class="section section--tint" aria-label="公开生产批次">
+			<div class="shell trace-list">{batches.map((batch) => <TraceBatchCard batch={batch} />)}</div>
+		</section>
+	</main>
+</BaseLayout>

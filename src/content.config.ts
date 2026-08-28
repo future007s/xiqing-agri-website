@@ -86,6 +86,7 @@ const mediaSchema = z.object({
 const experimentSchema = z.object({
 		templateVersion: z.number().int().default(1),
 		id: z.string(),
+		productionBatchId: z.string().nullable().optional(),
 		title: z.string(),
 		tower: z.string(),
 		status: z.enum(['preparing', 'running', 'completed', 'failed', 'paused']),
@@ -124,4 +125,104 @@ const experimentsEn = defineCollection({
 	schema: experimentSchema,
 });
 
-export const collections = { experiments, experimentsEn };
+const factResolution = z.enum([
+	'entity_exact',
+	'set_exact',
+	'batch_scope',
+	'shared_exposure',
+	'mass_balance_allocation',
+	'derived',
+	'unknown',
+]);
+
+const traceBatchSchema = z.object({
+	templateVersion: z.number().int().default(1),
+	id: z.string(),
+	displayId: z.string(),
+	title: z.string(),
+	status: z.enum(['draft', 'planned', 'active', 'suspended', 'ended', 'closed', 'cancelled', 'void']),
+	farm: z.object({
+		id: z.string(),
+		name: z.string(),
+		location: z.string().nullable().optional(),
+	}),
+	crop: z.object({
+		name: z.string(),
+		cultivar: z.string().nullable().optional(),
+	}),
+	cropCycle: z.object({
+		id: z.string(),
+		label: z.string(),
+	}),
+	sourceExperimentId: z.string().nullable().optional(),
+	memberResolution: z.enum(['entity_exact', 'set_exact', 'batch_scope', 'unknown']),
+	declaredMemberCount: z.number().int().nonnegative().nullable().optional(),
+	startedAt: z.string().nullable().optional(),
+	plannedHarvestAt: z.string().nullable().optional(),
+	endedAt: z.string().nullable().optional(),
+	zones: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+	towers: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+	nutrientLoops: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+	productionRecords: z.array(z.object({
+		id: z.string(),
+		at: z.string(),
+		type: z.string(),
+		title: z.string(),
+		summary: z.string(),
+		resolution: factResolution,
+		sourceScope: z.string(),
+	})).default([]),
+	sharedMeasurements: z.array(z.object({
+		id: z.string(),
+		metric: z.string(),
+		label: z.string(),
+		value: z.union([z.string(), z.number()]),
+		unit: z.string().optional(),
+		at: z.string(),
+		window: z.string().nullable().optional(),
+		quality: z.enum(['observed', 'partial', 'pending', 'invalid']),
+		resolution: factResolution,
+		sourceScope: z.string(),
+		sourceId: z.string(),
+	})).default([]),
+	inspections: z.array(z.object({
+		id: z.string(),
+		type: z.string(),
+		at: z.string(),
+		result: z.enum(['pending', 'passed', 'failed', 'inconclusive']),
+		scope: z.string(),
+		summary: z.string(),
+		reportUrl: z.url().nullable().optional(),
+	})).default([]),
+	certificates: z.array(z.object({
+		id: z.string(),
+		type: z.string(),
+		status: z.enum(['draft', 'active', 'expired', 'revoked', 'superseded', 'void']),
+		scope: z.string(),
+		issuedAt: z.string().nullable().optional(),
+		validUntil: z.string().nullable().optional(),
+		documentUrl: z.url().nullable().optional(),
+	})).default([]),
+	harvestBatches: z.array(z.object({
+		id: z.string(),
+		displayId: z.string(),
+		status: z.enum(['draft', 'open', 'quarantined', 'released', 'failed', 'consumed', 'closed', 'void']),
+		harvestedAt: z.string().nullable().optional(),
+		quantityValue: z.number().nonnegative().nullable().optional(),
+		quantityUnit: z.string().nullable().optional(),
+		sourceResolution: factResolution,
+	})).default([]),
+	featured: z.boolean().default(false),
+});
+
+const traceBatches = defineCollection({
+	loader: glob({ base: './src/content/trace-batches', pattern: '**/*.{md,mdx}' }),
+	schema: traceBatchSchema,
+});
+
+const traceBatchesEn = defineCollection({
+	loader: glob({ base: './src/content/trace-batches-en', pattern: '**/*.{md,mdx}' }),
+	schema: traceBatchSchema,
+});
+
+export const collections = { experiments, experimentsEn, traceBatches, traceBatchesEn };

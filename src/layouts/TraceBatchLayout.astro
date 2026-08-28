@@ -1,0 +1,152 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import {
+	formatTraceDate,
+	resolutionLabels,
+	resolutionLabelsEn,
+	traceStatusLabels,
+	traceStatusLabelsEn,
+} from '../lib/traceability';
+
+interface Props {
+	batch: CollectionEntry<'traceBatches'> | CollectionEntry<'traceBatchesEn'>;
+	locale?: 'zh' | 'en';
+}
+
+const { batch, locale = 'zh' } = Astro.props;
+const { data } = batch;
+const isEnglish = locale === 'en';
+const prefix = isEnglish ? '/en' : '';
+const alternatePath = isEnglish ? `/trace/${batch.id}` : `/en/trace/${batch.id}`;
+const statusLabel = isEnglish ? traceStatusLabelsEn[data.status] : traceStatusLabels[data.status];
+const resolutions = isEnglish ? resolutionLabelsEn : resolutionLabels;
+const title = isEnglish
+	? `${data.displayId} Trace Record | XIQING AGRI`
+	: `${data.displayId} 追溯记录 | 曦清农业 XIQING AGRI`;
+const description = isEnglish
+	? `${data.displayId}: public production-batch identity, production scope, measurements, inspections and harvest lineage.`
+	: `${data.displayId}：公开展示生产批次身份、生产范围、测量、检测与采收血缘。`;
+const labels = isEnglish ? {
+	back: 'All trace records',
+	businessId: 'BUSINESS ID',
+	crop: 'What is being grown',
+	where: 'Where it is grown',
+	started: 'Production started',
+	harvest: 'Harvest status',
+	inspection: 'Inspection status',
+	inputs: 'Nutrient-loop record',
+	pending: 'Pending reviewed record',
+	none: 'No reviewed public record yet',
+	recordScope: 'RECORD SCOPE',
+	dataRules: 'DATA RULES',
+	lineage: 'Trace lineage',
+	lineageNote: 'Each stage keeps its own identity. A future harvest or packaging step will be appended without rewriting the production batch.',
+	production: 'Production events',
+	measurements: 'Shared measurements',
+	measurementsNote: 'Zone, tower and nutrient-loop data is labelled as shared exposure, never as a plant-specific reading.',
+	inspections: 'Inspections and certificates',
+	harvests: 'Harvest batches',
+	experiment: 'R&D context',
+	members: 'Member resolution',
+	memberCount: 'Declared members',
+	unknown: 'Pending',
+} : {
+	back: '全部追溯记录',
+	businessId: '业务 ID',
+	crop: '种植什么',
+	where: '在哪里种植',
+	started: '开始生产',
+	harvest: '采收状态',
+	inspection: '检测状态',
+	inputs: '营养液回路记录',
+	pending: '待形成已审核记录',
+	none: '尚无已审核的公开记录',
+	recordScope: '记录范围',
+	dataRules: '数据原则',
+	lineage: '追溯血缘',
+	lineageNote: '每个阶段保留独立身份。未来采收或包装只会追加下游血缘，不会改写生产批次。',
+	production: '生产事件',
+	measurements: '共享测量',
+	measurementsNote: '区域、塔体和营养液回路数据必须标为共享暴露，绝不伪造成单株读数。',
+	inspections: '检测与证明',
+	harvests: '采收批次',
+	experiment: '研发上下文',
+	members: '成员分辨率',
+	memberCount: '已声明成员数',
+	unknown: '待记录',
+};
+const towerLabel = data.towers.length > 0 ? data.towers.map((item) => item.label).join('、') : labels.pending;
+const inspectionLabel = data.inspections.length > 0
+	? data.inspections.map((item) => item.result).join(' / ')
+	: labels.pending;
+---
+
+<BaseLayout title={title} description={description} type="article" locale={locale} alternatePath={alternatePath}>
+	<main>
+		<header class="trace-hero">
+			<div class="shell trace-hero__inner">
+				<a class="text-link" href={`${prefix}/trace`}>← {labels.back}</a>
+				<div class="trace-hero__identity">
+					<div><p>{data.displayId}</p><small>{labels.businessId} · {data.id}</small></div>
+					<span class:list={['badge', `badge--${data.status}`]}>{statusLabel}</span>
+				</div>
+				<h1>{data.title}</h1>
+				<dl class="trace-facts">
+					<div><dt>{labels.crop}</dt><dd>{data.crop.name}{data.crop.cultivar && ` · ${data.crop.cultivar}`}</dd></div>
+					<div><dt>{labels.where}</dt><dd>{data.farm.location ?? data.farm.name}<small>{towerLabel}</small></dd></div>
+					<div><dt>{labels.started}</dt><dd>{formatTraceDate(data.startedAt, locale)}</dd></div>
+					<div><dt>{labels.harvest}</dt><dd>{data.harvestBatches.length > 0 ? formatTraceDate(data.harvestBatches[0].harvestedAt, locale) : labels.pending}</dd></div>
+					<div><dt>{labels.inspection}</dt><dd>{inspectionLabel}</dd></div>
+					<div><dt>{labels.inputs}</dt><dd>{data.nutrientLoops.length > 0 ? data.nutrientLoops.map((item) => item.label).join('、') : labels.pending}</dd></div>
+				</dl>
+			</div>
+		</header>
+
+		<section class="record-body shell">
+			<article class="prose"><slot /></article>
+			<aside class="record-aside" aria-label={labels.recordScope}>
+				<p class="eyebrow">{labels.recordScope}</p>
+				<dl class="trace-scope-list">
+					<div><dt>{labels.experiment}</dt><dd>{data.sourceExperimentId ? <a href={`${prefix}/experiments/${data.sourceExperimentId.toLowerCase()}`}>{data.sourceExperimentId} ↗</a> : labels.unknown}</dd></div>
+					<div><dt>{labels.members}</dt><dd>{resolutions[data.memberResolution]}</dd></div>
+					<div><dt>{labels.memberCount}</dt><dd>{data.declaredMemberCount ?? labels.unknown}</dd></div>
+				</dl>
+				<p class="eyebrow trace-rules-title">{labels.dataRules}</p>
+				<ul><li>{isEnglish ? 'Unknown ≠ zero' : '未知 ≠ 0'}</li><li>{isEnglish ? 'Shared ≠ plant-specific' : '共享测量 ≠ 单株测量'}</li><li>{isEnglish ? 'Correction ≠ overwrite' : '更正 ≠ 覆盖历史'}</li></ul>
+			</aside>
+		</section>
+
+		<section class="record-section record-section--dark" aria-labelledby="lineage-title">
+			<div class="shell">
+				<div class="record-section__heading record-section__heading--light"><p class="eyebrow">REVERSIBLE LINEAGE</p><h2 id="lineage-title">{labels.lineage}</h2><p>{labels.lineageNote}</p></div>
+				<ol class="trace-lineage">
+					<li class="is-known"><span>01</span><strong>ProductionBatch</strong><small>{data.displayId}</small></li>
+					<li class:list={{ 'is-known': data.harvestBatches.length > 0 }}><span>02</span><strong>HarvestBatch</strong><small>{data.harvestBatches[0]?.displayId ?? labels.pending}</small></li>
+					<li><span>03</span><strong>PackageBatch</strong><small>{labels.pending}</small></li>
+					<li><span>04</span><strong>Package / Order</strong><small>{labels.pending}</small></li>
+				</ol>
+			</div>
+		</section>
+
+		<section class="record-section shell" aria-labelledby="production-title">
+			<div class="record-section__heading"><p class="eyebrow">PRODUCTION RECORDS</p><h2 id="production-title">{labels.production}</h2></div>
+			{data.productionRecords.length > 0 ? <ol class="record-timeline">{data.productionRecords.map((record) => <li><div class="record-timeline__meta"><span>{record.id}</span><time datetime={record.at}>{record.at}</time></div><div><h3>{record.title}</h3><p>{record.summary}</p></div><div class="record-timeline__status"><span>{record.type}</span><span>{resolutions[record.resolution]}</span><span>{record.sourceScope}</span></div></li>)}</ol> : <p class="trace-empty">{labels.none}</p>}
+		</section>
+
+		<section class="record-section record-section--tint" aria-labelledby="measurements-title">
+			<div class="shell"><div class="record-section__heading"><p class="eyebrow">MEASUREMENT SCOPE</p><h2 id="measurements-title">{labels.measurements}</h2><p>{labels.measurementsNote}</p></div>
+			{data.sharedMeasurements.length > 0 ? <div class="trace-measurements">{data.sharedMeasurements.map((measurement) => <article><header><span>{measurement.sourceId}</span><time datetime={measurement.at}>{measurement.at}</time></header><h3>{measurement.label}</h3><p>{measurement.value}{measurement.unit && ` ${measurement.unit}`}</p><small>{resolutions[measurement.resolution]} · {measurement.sourceScope} · {measurement.quality}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}</div>
+		</section>
+
+		<section class="record-section shell" aria-labelledby="inspection-title">
+			<div class="record-section__heading"><p class="eyebrow">INSPECTION SCOPE</p><h2 id="inspection-title">{labels.inspections}</h2></div>
+			{data.inspections.length + data.certificates.length > 0 ? <div class="trace-audit-grid">{data.inspections.map((item) => <article><span>{item.id}</span><h3>{item.type}</h3><p>{item.summary}</p><small>{item.scope} · {item.result} · {item.at}</small></article>)}{data.certificates.map((item) => <article><span>{item.id}</span><h3>{item.type}</h3><p>{item.scope}</p><small>{item.status} · {formatTraceDate(item.issuedAt, locale)}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}
+		</section>
+
+		<section class="record-section record-section--tint" aria-labelledby="harvest-title">
+			<div class="shell"><div class="record-section__heading"><p class="eyebrow">HARVEST LINEAGE</p><h2 id="harvest-title">{labels.harvests}</h2></div>
+			{data.harvestBatches.length > 0 ? <div class="trace-audit-grid">{data.harvestBatches.map((item) => <article><span>{item.displayId}</span><h3>{item.id}</h3><p>{item.quantityValue ?? labels.unknown}{item.quantityUnit && ` ${item.quantityUnit}`}</p><small>{resolutions[item.sourceResolution]} · {item.status} · {formatTraceDate(item.harvestedAt, locale)}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}</div>
+		</section>
+	</main>
+</BaseLayout>

@@ -1,10 +1,11 @@
 # 实验记录标准模板
 
-复制本文件的 YAML 区域，保存为 `src/content/experiments/T01-002.md`，再填写正文。接口以后也应生成同样的字段结构，避免人工记录和自动记录使用两套格式。
+本文件是官网发布格式和字段说明。日常建议在 Obsidian 中调用 `/Users/jim/Documents/自用综合/templates/气雾培-新建实验记录.md`，让 Templater 生成一份独立的本地实验记录，再把完成后的发布副本放入 `src/content/experiments/T01-002.md`。这样每次实验都会保留一个本地 Markdown 文档，不会覆盖模板或旧记录。接口以后也应生成同样的字段结构，避免人工记录和自动记录使用两套格式。
 
 原则：
 
-- `id` 是整条实验记录的唯一关联键，传感器、事件、图片、视频、OCR 都通过它关联。
+- `id` 是实验上下文的唯一关联键，实验内事件、图片、视频和 OCR 可通过它关联；它不是生产、采收、包装和订单的万能主键。
+- 实验进入实际生产时用 `productionBatchId` 显式关联 ProductionBatch；一个实验与多个生产批次的关系应进入主数据库关系模型，不能复制或拼接编号代替。
 - 时间统一使用 ISO 8601，例如 `2026-08-25T14:30:00+08:00`。
 - 不确定的数值留空，不要写 `0`；没有数据和测得为零不是一回事。
 - 原始遥测不可覆盖；修正值应产生新的记录并保留质量状态。
@@ -19,6 +20,7 @@ templateVersion: 1
 
 # 实验身份
 id: "T01-002"
+productionBatchId: "PB-QDF01-20260825-01" # 可选；只在已登记真实生产批次时填写
 title: "第二代气雾培种植塔 · 首轮验证"
 tower: "XQ-T1"
 status: "preparing" # preparing | running | completed | failed | paused
@@ -76,7 +78,7 @@ events:
 # 原始数据应进入时序数据库，接口只把经过聚合的摘要写到这里。
 telemetry:
   - at: "2026-08-25T12:00:00+08:00"
-    source: "MQTT-DTU"
+    source: "CTRL-T01" # P1/P2/EC 主采集源；独立环境总线可写 DTU-001
     status: "observed" # observed | partial | pending | invalid
     metrics:
       - key: "ec"
@@ -181,9 +183,11 @@ featured: false
 
 ## 接口写入约定
 
-后续接口只需要接收 `experimentId` 和对应记录：
+实验接口使用 `experimentId`（数据库列名为 `experiment_id`）定位实验上下文；生产事实必须使用相应的 Position、PlantInstance、ProductionBatch、HarvestBatch 或 PackageBatch 身份，不能只接收 `experimentId`：
 
 ```text
+GET  /api/experiments/{experimentId}
+GET  /api/experiments/{experimentId}/telemetry
 POST /api/experiments/{experimentId}/events
 POST /api/experiments/{experimentId}/telemetry-snapshots
 POST /api/experiments/{experimentId}/observations
@@ -198,3 +202,13 @@ GET /api/experiments/{experimentId}/media
 `POST /api/media/upload` 接收 multipart/form-data：`experimentId`、`kind`、`file`、`capturedAt`、`caption`、`alt`、`eventId`、`plantId`、`visibility` 和 `reviewStatus`。上传口令通过 `Authorization: Bearer` 传递。接口负责校验字段、生成唯一 ID、写入 R2 和 D1，并返回同结构的媒体 YAML。官网只展示 `visibility: public` 且 `reviewStatus: confirmed` 的内容。
 
 如果 R2 已写入但 D1 尚未配置，接口会返回 `202` 和 `metadataStatus: pending_db`，保留返回字段用于补写索引。
+
+## 自动采集数据边界
+
+- `experiments` 保存实验身份；传感器是长期设备，通过带有效期的 SensorInstallation 绑定到真实测点和 MeasurementScope，不随实验重建身份。
+- 连续采集的原始数据进入 PostgreSQL + TimescaleDB，至少保留安装来源、测量范围、测量时间、指标、数值、单位、质量状态和原始 payload。
+- 原始样本只追加；修正数据新增记录并引用原记录，不覆盖历史。
+- 分钟、小时、日摘要在主库生成；只有经审核、带 `resolution`、`source_scope_type` 和 `source_scope_id` 的低频摘要才可发布到 D1 或 Markdown。
+- 营养液和环境数据属于回路、区域或测点；在植株页面只能标为共享暴露，不能伪造成单株测量。
+- `POST /api/experiments/{experimentId}/telemetry-snapshots` 是导入/摘要接口，不等于 MQTT 自动采集已经完成。
+- 具体表结构见 [`docs/telemetry-data-design.md`](telemetry-data-design.md) 和 [`migrations/0003_experiment_data_design.sql`](../migrations/0003_experiment_data_design.sql)。

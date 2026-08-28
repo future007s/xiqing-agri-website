@@ -1,0 +1,18 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import TraceBatchLayout from '../../../layouts/TraceBatchLayout.astro';
+
+export async function getStaticPaths() {
+	const batches = await getCollection('traceBatchesEn');
+	return batches.map((batch) => ({ params: { slug: batch.id }, props: { batch } }));
+}
+
+interface Props {
+	batch: CollectionEntry<'traceBatchesEn'>;
+}
+
+const { batch } = Astro.props;
+const { Content } = await render(batch);
+---
+
+<TraceBatchLayout batch={batch} locale="en"><Content /></TraceBatchLayout>

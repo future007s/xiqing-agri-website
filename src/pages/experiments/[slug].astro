@@ -44,6 +44,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 				<MetricCard label="用水量" value={displayValue(data.waterL, 'L')} kind="实测值" pending={data.waterL == null} />
 				<MetricCard label="成本" value={displayValue(data.costCny, 'CNY')} kind="实测值" pending={data.costCny == null} />
 			</div>
+			{data.productionBatchId && <p class="experiment-trace-link"><span>关联生产批次</span><a href={`/trace/${data.productionBatchId.toLowerCase()}`}>{data.productionBatchId} ↗</a></p>}
 		</div>
 	</section>
 	<section class="record-body shell">

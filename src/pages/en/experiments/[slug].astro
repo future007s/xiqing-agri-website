@@ -44,6 +44,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 				<MetricCard label="Water" value={displayValue(data.waterL, 'L', 'Pending')} kind="MEASURED" pending={data.waterL == null} />
 				<MetricCard label="Cost" value={displayValue(data.costCny, 'CNY', 'Pending')} kind="MEASURED" pending={data.costCny == null} />
 			</div>
+			{data.productionBatchId && <p class="experiment-trace-link"><span>Linked production batch</span><a href={`/en/trace/${data.productionBatchId.toLowerCase()}`}>{data.productionBatchId} ↗</a></p>}
 		</div>
 	</section>
 

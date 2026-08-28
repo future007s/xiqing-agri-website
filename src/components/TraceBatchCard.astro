@@ -1,0 +1,34 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatTraceDate, traceStatusLabels, traceStatusLabelsEn } from '../lib/traceability';
+
+interface Props {
+	batch: CollectionEntry<'traceBatches'> | CollectionEntry<'traceBatchesEn'>;
+	locale?: 'zh' | 'en';
+}
+
+const { batch, locale = 'zh' } = Astro.props;
+const { data } = batch;
+const isEnglish = locale === 'en';
+const href = `${isEnglish ? '/en' : ''}/trace/${batch.id}`;
+const labels = isEnglish
+	? { crop: 'Crop', farm: 'Farm', started: 'Started', harvest: 'Harvest', view: 'View trace record' }
+	: { crop: '作物', farm: '农场', started: '开始', harvest: '采收', view: '查看追溯记录' };
+---
+
+<article class="trace-card">
+	<a href={href} aria-label={`${labels.view} ${data.displayId}: ${data.title}`}>
+		<header>
+			<div><span>{data.displayId}</span><small>{data.id}</small></div>
+			<span class:list={['badge', `badge--${data.status}`]}>{isEnglish ? traceStatusLabelsEn[data.status] : traceStatusLabels[data.status]}</span>
+		</header>
+		<h2>{data.title}</h2>
+		<dl>
+			<div><dt>{labels.crop}</dt><dd>{data.crop.name}</dd></div>
+			<div><dt>{labels.farm}</dt><dd>{data.farm.name}</dd></div>
+			<div><dt>{labels.started}</dt><dd>{formatTraceDate(data.startedAt, locale)}</dd></div>
+			<div><dt>{labels.harvest}</dt><dd>{formatTraceDate(data.plannedHarvestAt, locale)}</dd></div>
+		</dl>
+		<span class="trace-card__arrow" aria-hidden="true">↗</span>
+	</a>
+</article>

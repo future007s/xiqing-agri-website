@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import TraceBatchCard from '../../../components/TraceBatchCard.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { sortTraceBatchesNewestFirst } from '../../../lib/traceability';
+
+const batches = (await getCollection('traceBatchesEn')).sort(sortTraceBatchesNewestFirst);
+---
+
+<BaseLayout
+	title="Traceability | XIQING AGRI"
+	description="Browse XIQING AGRI production-batch origins, production scopes, shared measurements, inspections and harvest lineage. Unknown data is never replaced with zero or design values."
+	locale="en"
+	alternatePath="/trace"
+>
+	<main>
+		<header class="page-hero shell">
+			<p class="eyebrow">TRACEABILITY RECORDS</p>
+			<div class="page-hero__heading"><h1>Traceability</h1><p>{String(batches.length).padStart(2, '0')} BATCHES</p></div>
+			<p class="page-hero__intro">Reversible lineage begins with the ProductionBatch. Physical positions, plants, harvest batches and package batches retain separate identities, and shared environmental data is never presented as plant-specific measurement.</p>
+		</header>
+		<section class="section section--tint" aria-label="Public production batches">
+			<div class="shell trace-list">{batches.map((batch) => <TraceBatchCard batch={batch} locale="en" />)}</div>
+		</section>
+	</main>
+</BaseLayout>
