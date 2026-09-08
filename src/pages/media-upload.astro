@@ -23,7 +23,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 					<h2 id="upload-title">先上传，再关联实验</h2>
 					<p class="upload-copy">这一步适合现场照片、植物状态照片和短视频。设备或自动化程序以后可以复用同一个接口，不需要改媒体字段结构。</p>
 					<div class="upload-rules">
-						<p><strong>目录</strong><span>experiments/{'{experimentId}'}/{'{date}'}/{'{uuid}'}.{'{ext}'}</span></p>
+						<p><strong>重复上传</strong><span>同一实验内相同文件复用原记录，原说明和审核状态保持不变。</span></p>
 						<p><strong>图片</strong><span>建议压缩到 10 MB 以内；视频先上传关键短片。</span></p>
 						<p><strong>审核</strong><span>公开展示前请将审核状态设为“已确认”。</span></p>
 					</div>
@@ -75,8 +75,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 						<div class="form-field">
 							<label for="visibility">可见范围</label>
 							<select id="visibility" name="visibility">
-								<option value="public">公开实验页</option>
 								<option value="private">仅内部</option>
+								<option value="public">公开实验页</option>
 							</select>
 						</div>
 						<div class="form-field">

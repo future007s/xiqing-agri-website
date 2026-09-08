@@ -1,3 +1,4 @@
+import { onRequestGet as mediaContent } from '../functions/api/media/[mediaId]/content';
 import { onRequestGet as listExperimentMedia, onRequestOptions as listExperimentMediaOptions } from '../functions/api/experiments/[experimentId]/media';
 import { onRequestPost as uploadMedia, onRequestOptions as uploadMediaOptions } from '../functions/api/media/upload';
 import {
@@ -26,6 +27,10 @@ export default {
 		if (parts[0] === 'api' && parts[1] === 'media' && parts[2] === 'upload') {
 			if (request.method === 'OPTIONS') return uploadMediaOptions();
 			if (request.method === 'POST') return uploadMedia({ request, env, params: {} });
+		}
+
+		if (parts.length === 4 && parts[0] === 'api' && parts[1] === 'media' && parts[3] === 'content' && ['GET', 'HEAD'].includes(request.method)) {
+			return mediaContent({ request, env, params: { mediaId: parts[2] } });
 		}
 
 		if (parts[0] === 'api' && parts[1] === 'media' && parts[2] !== 'upload') {

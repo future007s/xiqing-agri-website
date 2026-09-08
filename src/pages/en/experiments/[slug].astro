@@ -21,7 +21,7 @@ const eventStatusLabels = { planned: 'Planned', completed: 'Completed', failed: 
 const telemetryStatusLabels = { observed: 'Observed', partial: 'Partial', pending: 'Pending sync', invalid: 'Invalid' };
 const qualityLabels = { observed: 'Observed', estimated: 'Estimated', pending: 'Pending', invalid: 'Invalid' };
 const severityLabels = { info: 'Record', attention: 'Attention', critical: 'Critical' };
-const publicMedia = data.media.filter((item) => item.visibility === 'public' && item.reviewStatus === 'confirmed');
+const publicMedia = data.media.filter((item) => item.storage !== 'r2' && item.visibility === 'public' && item.reviewStatus === 'confirmed');
 const publicObservations = data.observations.filter((item) => item.reviewStatus === 'confirmed');
 const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'confirmed');
 ---

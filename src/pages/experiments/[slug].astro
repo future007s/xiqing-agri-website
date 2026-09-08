@@ -21,7 +21,7 @@ const eventStatusLabels = { planned: '计划', completed: '已完成', failed: '
 const telemetryStatusLabels = { observed: '实测', partial: '部分实测', pending: '待同步', invalid: '无效' };
 const qualityLabels = { observed: '实测', estimated: '估算', pending: '待确认', invalid: '无效' };
 const severityLabels = { info: '记录', attention: '注意', critical: '严重' };
-const publicMedia = data.media.filter((item) => item.visibility === 'public' && item.reviewStatus === 'confirmed');
+const publicMedia = data.media.filter((item) => item.storage !== 'r2' && item.visibility === 'public' && item.reviewStatus === 'confirmed');
 const publicObservations = data.observations.filter((item) => item.reviewStatus === 'confirmed');
 const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'confirmed');
 ---

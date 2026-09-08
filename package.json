@@ -10,7 +10,8 @@
     "build": "astro build",
     "check": "astro check",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node tests/run.mjs"
   },
   "dependencies": {
     "astro": "^7.2.6"

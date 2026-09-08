@@ -19,6 +19,8 @@ interface ManagedMedia {
 	sizeBytes: number;
 	deletedAt: string | null;
 	deleteReason: string | null;
+	purgeState: 'active' | 'purging';
+	storageBackend: 'private_r2' | 'legacy_public';
 }
 
 interface ManagedResponse {
@@ -38,10 +40,15 @@ const summary = document.querySelector<HTMLElement>('#media-management-summary')
 const list = document.querySelector<HTMLElement>('#media-management-list');
 let currentToken = '';
 let currentExperiment = '';
+let generation = 0;
+const previewUrls = new Set<string>();
 
-const toDateTimeLocal = (value: string): string => value.replace(/([zZ]|[+-]\d{2}:?\d{2})$/, '').slice(0, 16);
+const toDateTimeLocal = (value: string): string => {
+	const date = new Date(value);
+	return Number.isFinite(date.getTime()) ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+};
 
-const statusLabel = (media: ManagedMedia): string => media.deletedAt ? '已软删除' : media.reviewStatus === 'confirmed' ? '已确认' : media.reviewStatus === 'rejected' ? '已拒绝' : '待审核';
+const statusLabel = (media: ManagedMedia): string => media.purgeState === 'purging' ? '删除待完成' : media.deletedAt ? '已软删除' : media.reviewStatus === 'confirmed' ? '已确认' : media.reviewStatus === 'rejected' ? '已拒绝' : '待审核';
 
 const createField = (labelText: string, control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): HTMLLabelElement => {
 	const label = document.createElement('label');
@@ -83,10 +90,14 @@ const request = async (url: string, init: RequestInit = {}): Promise<ManagedResp
 
 const load = async (): Promise<void> => {
 	if (!list || !results || !summary || !statusMessage) return;
+	const loadGeneration = ++generation;
+	previewUrls.forEach((url) => URL.revokeObjectURL(url)); previewUrls.clear();
+	list.replaceChildren();
 	statusMessage.textContent = '正在读取媒体索引……';
 	const query = currentExperiment ? `?experimentId=${encodeURIComponent(currentExperiment)}` : '';
 	try {
 		const payload = await request(`/api/media${query}`);
+		if (loadGeneration !== generation) return;
 		const media = Array.isArray(payload.media) ? payload.media : [];
 		list.replaceChildren(...media.map(renderCard));
 		results.hidden = false;
@@ -112,25 +123,31 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 
 	const preview = document.createElement('div');
 	preview.className = 'management-card__preview';
-	if (media.kind === 'video') {
-		const video = document.createElement('video');
-		video.controls = true;
-		video.preload = 'metadata';
-		if (media.poster) video.poster = media.poster;
-		video.src = media.src;
-		preview.append(video);
-	} else {
-		const image = document.createElement('img');
-		image.src = media.thumbnail || media.src;
-		image.alt = media.alt;
-		preview.append(image);
-	}
-	const link = document.createElement('a');
-	link.href = media.src;
-	link.target = '_blank';
-	link.rel = 'noreferrer';
-	link.textContent = media.id;
-	preview.append(link);
+	const previewButton = document.createElement('button');
+	previewButton.type = 'button';
+	previewButton.textContent = media.storageBackend === 'legacy_public' ? '旧文件待迁移' : media.deletedAt ? '恢复后可预览' : '加载预览';
+	previewButton.disabled = !!media.deletedAt || media.storageBackend !== 'private_r2';
+	previewButton.addEventListener('click', async () => {
+		const previewGeneration = generation;
+		previewButton.disabled = true;
+		try {
+			const response = await fetch(`/api/media/${encodeURIComponent(media.id)}/content`, { headers: { Authorization: `Bearer ${currentToken}` } });
+			if (!response.ok) throw new Error('文件暂不可访问。');
+			const blob = await response.blob();
+			if (previewGeneration !== generation) return;
+			const url = URL.createObjectURL(blob); previewUrls.add(url);
+			const element = document.createElement(media.kind === 'video' ? 'video' : 'img');
+			element.src = url;
+			if (element instanceof HTMLVideoElement) element.controls = true;
+			else element.alt = media.alt;
+			const link = document.createElement('a'); link.href = url; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = media.id;
+			preview.replaceChildren(element, link);
+		} catch (error) {
+			previewButton.textContent = error instanceof Error ? error.message : '预览失败';
+			previewButton.disabled = false;
+		}
+	});
+	preview.append(previewButton);
 	card.append(preview);
 
 	const form = document.createElement('div');
@@ -163,13 +180,14 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 	const save = document.createElement('button');
 	save.className = 'button button--dark';
 	save.type = 'button';
+	save.disabled = media.purgeState === 'purging';
 	save.textContent = '保存修改';
 	save.addEventListener('click', async () => {
 		save.disabled = true;
 		try {
 			await request(`/api/media/${encodeURIComponent(media.id)}`, {
 				method: 'PATCH',
-				body: JSON.stringify({ capturedAt: capturedAt.value, caption: caption.value, alt: alt.value, eventId: eventId.value, plantId: plantId.value, visibility: visibility.value, reviewStatus: reviewStatus.value, reason: reason.value }),
+				body: JSON.stringify({ capturedAt: capturedAt.value === toDateTimeLocal(media.at) ? media.at : capturedAt.value ? new Date(capturedAt.value).toISOString() : '', caption: caption.value, alt: alt.value, eventId: eventId.value, plantId: plantId.value, visibility: visibility.value, reviewStatus: reviewStatus.value, reason: reason.value }),
 			});
 			statusMessage!.textContent = `${media.id} 已保存。`;
 			await load();
@@ -184,6 +202,7 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 	const remove = document.createElement('button');
 	remove.className = 'button';
 	remove.type = 'button';
+	remove.disabled = media.purgeState === 'purging';
 	remove.textContent = media.deletedAt ? '恢复记录' : '软删除';
 	remove.addEventListener('click', async () => {
 		remove.disabled = true;
@@ -207,12 +226,13 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 		const purge = document.createElement('button');
 		purge.className = 'button button--danger';
 		purge.type = 'button';
-		purge.textContent = '彻底删除';
+		purge.textContent = media.purgeState === 'purging' ? '重试彻底删除' : '彻底删除';
+		purge.disabled = media.storageBackend !== 'private_r2';
 		purge.addEventListener('click', async () => {
 			if (!window.confirm('这会同时删除 R2 文件和 D1 记录，且无法恢复。确认彻底删除吗？')) return;
 			purge.disabled = true;
 			try {
-				await request(`/api/media/${encodeURIComponent(media.id)}/purge?reason=${encodeURIComponent(reason.value)}`, { method: 'POST' });
+				await request(`/api/media/${encodeURIComponent(media.id)}/purge?reason=${encodeURIComponent(reason.value)}`, { method: 'POST', headers: { 'X-Confirm-Purge': 'PURGE' } });
 				statusMessage!.textContent = `${media.id} 已彻底删除。`;
 				await load();
 			} catch (error) {

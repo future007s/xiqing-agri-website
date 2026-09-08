@@ -1,119 +1,63 @@
 import {
-	authorized,
-	cleanText,
-	isOptions,
-	jsonResponse,
-	normalizeCapturedAt,
-	optionsResponse,
-	publicObjectUrl,
-	safeFileName,
-	sha256Hex,
-	validExperimentId,
-	type MediaEnv,
-	type MediaRecord,
-	type PagesContext,
+	authorized, cleanText, jsonResponse, mediaFromRow, mediaContentUrl, normalizeCapturedAt,
+	optionsResponse, validExperimentId, sha256Hex, auditStatement, withDatabaseErrors,
+	type MediaEnv, type PagesContext,
 } from '../../_shared/media';
-
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
-const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 
 export const onRequestOptions = (): Response => optionsResponse();
 
-export const onRequestPost = async ({ request, env }: PagesContext<MediaEnv>): Promise<Response> => {
-	if (isOptions(request)) return optionsResponse();
-	if (!env.MEDIA_BUCKET) return jsonResponse({ error: 'MEDIA_BUCKET 未配置。请先绑定 R2 存储桶。' }, 503);
-	if (!authorized(request, env)) return jsonResponse({ error: '上传口令无效，或接口尚未配置 MEDIA_UPLOAD_TOKEN。' }, 401);
-
+export const onRequestPost = withDatabaseErrors(async ({ request, env }: PagesContext<MediaEnv>): Promise<Response> => {
+	if (!authorized(request, env)) return jsonResponse({ error: '上传口令无效。' }, 401);
+	if (!env.DB || !env.MEDIA_PRIVATE_BUCKET) return jsonResponse({ error: '请先配置私有媒体存储和媒体索引数据库。' }, 503);
 	let form: FormData;
-	try {
-		form = await request.formData();
-	} catch {
-		return jsonResponse({ error: '请求不是有效的 multipart/form-data。' }, 400);
-	}
-
-	const experimentId = cleanText(form.get('experimentId'), 64);
-	const kind = cleanText(form.get('kind'), 12) as 'image' | 'video';
+	try { form = await request.formData(); } catch { return jsonResponse({ error: '上传表单无效。' }, 400); }
+	const experimentId = String(form.get('experimentId') ?? '').trim();
+	const kind = form.get('kind');
 	const file = form.get('file');
-	if (!validExperimentId(experimentId)) return jsonResponse({ error: '实验编号只能包含字母、数字、下划线和短横线。' }, 400);
-	if (kind !== 'image' && kind !== 'video') return jsonResponse({ error: '媒体类型只能是 image 或 video。' }, 400);
-	if (!(file instanceof File)) return jsonResponse({ error: '没有收到图片或视频文件。' }, 400);
-
-	const allowedTypes = kind === 'image' ? ALLOWED_IMAGE_TYPES : ALLOWED_VIDEO_TYPES;
-	const maxBytes = kind === 'image' ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
-	if (!allowedTypes.has(file.type)) return jsonResponse({ error: `不支持的文件类型：${file.type || '未知类型'}。` }, 415);
-	if (file.size <= 0 || file.size > maxBytes) return jsonResponse({ error: `文件过大。${kind === 'image' ? '图片' : '视频'}上限为 ${Math.round(maxBytes / 1024 / 1024)} MB。` }, 413);
-
-	const capturedAt = normalizeCapturedAt(cleanText(form.get('capturedAt'), 64), env.DEFAULT_TIMEZONE_OFFSET ?? '+08:00');
-	const uploadedAt = new Date().toISOString();
-	const { base, extension } = safeFileName(file.name);
-	const uniqueId = crypto.randomUUID();
-	const mediaId = `${kind === 'image' ? 'IMG' : 'VID'}-${experimentId}-${uniqueId.slice(0, 8)}`;
-	const dateKey = capturedAt.slice(0, 10).replace(/[^0-9-]/g, '') || uploadedAt.slice(0, 10);
-	const objectKey = `experiments/${experimentId}/${dateKey}/${uniqueId}-${base}.${extension}`;
+	if (!validExperimentId(experimentId)) return jsonResponse({ error: '实验编号无效。' }, 400);
+	if (kind !== 'image' && kind !== 'video') return jsonResponse({ error: '媒体类型无效。' }, 400);
+	if (!(file instanceof File) || !file.size) return jsonResponse({ error: '请选择非空文件。' }, 400);
+	const allowed = kind === 'image' ? ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'] : ['video/mp4', 'video/webm', 'video/quicktime'];
+	if (!allowed.includes(file.type)) return jsonResponse({ error: '文件类型不受支持。' }, 400);
+	if (file.size > (kind === 'image' ? 10 : 50) * 1024 * 1024) return jsonResponse({ error: '文件超过大小限制。' }, 413);
+	const caption = cleanText(form.get('caption'), 240);
+	const alt = cleanText(form.get('alt'), 500);
+	if (!caption || !alt) return jsonResponse({ error: '媒体说明和无障碍描述不能为空。' }, 400);
+	const visibility = form.get('visibility') || 'private';
+	const reviewStatus = form.get('reviewStatus') || 'pending';
+	if (!['public', 'private'].includes(String(visibility)) || !['pending', 'confirmed', 'rejected'].includes(String(reviewStatus))) return jsonResponse({ error: '可见范围或审核状态无效。' }, 400);
+	// Uncontrolled external poster/thumbnail URLs would bypass the same access policy.
+	if (form.get('poster') || form.get('thumbnail')) return jsonResponse({ error: '封面请作为独立媒体上传并审核。' }, 400);
+	let capturedAt: string;
+	try { capturedAt = normalizeCapturedAt(String(form.get('capturedAt') || new Date().toISOString()), env.DEFAULT_TIMEZONE_OFFSET); }
+	catch { return jsonResponse({ error: '拍摄时间无效。' }, 400); }
 	const bytes = await file.arrayBuffer();
 	const checksum = await sha256Hex(bytes);
-	await env.MEDIA_BUCKET.put(objectKey, bytes, {
-		httpMetadata: {
-			contentType: file.type,
-			cacheControl: 'public, max-age=31536000, immutable',
-		},
-	});
-
-	const src = publicObjectUrl(env.MEDIA_PUBLIC_BASE_URL, objectKey);
-	const record: MediaRecord = {
-		id: mediaId,
-		experimentId,
-		kind,
-		src,
-		poster: cleanText(form.get('poster'), 1000) || null,
-		thumbnail: cleanText(form.get('thumbnail'), 1000) || (kind === 'image' ? src : null),
-		at: capturedAt,
-		eventId: cleanText(form.get('eventId'), 128) || null,
-		plantId: cleanText(form.get('plantId'), 128) || null,
-		caption: cleanText(form.get('caption'), 240) || base,
-		alt: cleanText(form.get('alt'), 500) || `${kind === 'image' ? '实验图片' : '实验视频'}：${base}`,
-		visibility: cleanText(form.get('visibility'), 12) === 'private' ? 'private' : 'public',
-		reviewStatus: cleanText(form.get('reviewStatus'), 12) === 'confirmed' ? 'confirmed' : 'pending',
-		storage: 'r2',
-		objectKey,
-		mimeType: file.type,
-		sizeBytes: file.size,
-		checksum,
-		source: 'manual_upload',
-		uploadedAt,
-		deletedAt: null,
-		deleteReason: null,
-	};
-
-	let metadataStatus: 'written' | 'pending_db' = 'pending_db';
-	if (env.DB) {
-		try {
-			await env.DB.prepare(`
-				INSERT INTO experiment_media (
-					id, experiment_id, kind, src, poster, thumbnail, captured_at, event_id, plant_id,
-					caption, alt, visibility, review_status, object_key, mime_type, size_bytes,
-					checksum, uploaded_at
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-				ON CONFLICT(id) DO UPDATE SET
-					src = excluded.src, poster = excluded.poster, thumbnail = excluded.thumbnail,
-					caption = excluded.caption, alt = excluded.alt, visibility = excluded.visibility,
-					review_status = excluded.review_status, object_key = excluded.object_key,
-					mime_type = excluded.mime_type, size_bytes = excluded.size_bytes,
-					checksum = excluded.checksum, uploaded_at = excluded.uploaded_at
-			`).bind(
-				record.id, record.experimentId, record.kind, record.src, record.poster, record.thumbnail,
-				record.at, record.eventId, record.plantId, record.caption, record.alt, record.visibility,
-				record.reviewStatus, record.objectKey, record.mimeType, record.sizeBytes, record.checksum,
-				record.uploadedAt,
-			).run();
-			metadataStatus = 'written';
-		} catch {
-			// The R2 object is intentionally kept. The returned record can be replayed after the DB is migrated.
-			metadataStatus = 'pending_db';
-		}
+	const lookup = () => env.DB!.prepare("SELECT * FROM experiment_media WHERE experiment_id = ? AND checksum = ? AND storage_backend = 'private_r2'").bind(experimentId, checksum);
+	const existing = (await lookup().all()).results[0];
+	const duplicateResponse = (row: Record<string, unknown>): Response => row.deleted_at || row.purge_state === 'purging'
+		? jsonResponse({ error: '相同文件已有删除中的记录。请先在媒体管理中恢复或完成彻底删除。', id: row.id }, 409)
+		: jsonResponse({ media: mediaFromRow(row), metadataStatus: 'written', deduplicated: true }, 200);
+	if (existing) return duplicateResponse(existing);
+	const id = `${kind === 'image' ? 'IMG' : 'VID'}-${experimentId}-${crypto.randomUUID()}`;
+	const objectKey = `private/${experimentId}/${crypto.randomUUID()}`;
+	await env.MEDIA_PRIVATE_BUCKET.put(objectKey, bytes, { httpMetadata: { contentType: file.type, cacheControl: 'private, no-store' } });
+	// Each candidate owns a unique key. Losing a concurrent insert cannot delete the winner's object.
+	// A failed response may follow a committed transaction. Retain the private object
+	// on uncertain D1 errors; reconcile unreferenced objects after recovery.
+	const result = await env.DB.batch([
+		env.DB.prepare(`INSERT INTO experiment_media
+			(id, experiment_id, kind, src, captured_at, event_id, plant_id, caption, alt, visibility, review_status, object_key, mime_type, size_bytes, checksum, uploaded_at, storage_backend)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'private_r2')
+			ON CONFLICT (experiment_id, checksum) WHERE storage_backend = 'private_r2' DO NOTHING RETURNING *`)
+			.bind(id, experimentId, kind, mediaContentUrl(id), capturedAt, cleanText(form.get('eventId'), 128) || null, cleanText(form.get('plantId'), 128) || null, caption, alt, visibility, reviewStatus, objectKey, file.type, file.size, checksum, new Date().toISOString()),
+		auditStatement(env.DB, id, 'update', null, { operation: 'upload', checksum }),
+		lookup(),
+	]);
+	const selected = result[2].results[0];
+	if (selected.id !== id) {
+		try { await env.MEDIA_PRIVATE_BUCKET.delete(objectKey); } catch { /* Private orphan: reconcile during maintenance. */ }
+		return duplicateResponse(selected);
 	}
-
-	return jsonResponse({ media: record, metadataStatus }, metadataStatus === 'written' ? 201 : 202);
-};
+	return jsonResponse({ media: mediaFromRow(selected), metadataStatus: 'written', deduplicated: false }, 201);
+});

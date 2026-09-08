@@ -17,8 +17,9 @@ interface UploadedMedia {
 
 interface UploadResponse {
 	error?: string;
-	metadataStatus?: 'written' | 'pending_db';
+	metadataStatus?: 'written';
 	media?: UploadedMedia;
+	deduplicated?: boolean;
 }
 
 const form = document.querySelector<HTMLFormElement>('#media-upload-form');
@@ -73,20 +74,10 @@ const showPreview = (): void => {
 
 fileInput?.addEventListener('change', showPreview);
 
-const makeSnippet = (media: UploadedMedia): string => `  - id: "${media.id}"
-    kind: "${media.kind}"
-    src: "${media.src}"
-    poster: ${media.poster ? `"${media.poster}"` : ''}
-    thumbnail: ${media.thumbnail ? `"${media.thumbnail}"` : ''}
-    at: "${media.at}"
-    eventId: ${media.eventId ? `"${media.eventId}"` : ''}
-    plantId: ${media.plantId ? `"${media.plantId}"` : ''}
-    caption: "${media.caption}"
-    alt: "${media.alt}"
-    visibility: "${media.visibility}"
-    reviewStatus: "${media.reviewStatus}"
-    storage: "${media.storage}"
-    objectKey: "${media.objectKey}"`;
+const makeSnippet = (media: UploadedMedia): string => Object.entries(media)
+	.filter(([key]) => ['id', 'kind', 'src', 'poster', 'thumbnail', 'at', 'eventId', 'plantId', 'caption', 'alt', 'visibility', 'reviewStatus', 'storage', 'objectKey'].includes(key))
+	.map(([key, value], index) => `${index === 0 ? '  - ' : '    '}${key}: ${JSON.stringify(value)}`)
+	.join('\n');
 
 form?.addEventListener('submit', async (event) => {
 	event.preventDefault();
@@ -96,6 +87,7 @@ form?.addEventListener('submit', async (event) => {
 	const formData = new FormData(form);
 	const token = String(formData.get('uploadToken') || '');
 	formData.delete('uploadToken');
+	if (capturedAtInput?.value) formData.set('capturedAt', new Date(capturedAtInput.value).toISOString());
 	try {
 		const response = await fetch('/api/media/upload', {
 			method: 'POST',
@@ -104,9 +96,9 @@ form?.addEventListener('submit', async (event) => {
 		});
 		const payload = (await response.json().catch(() => ({}))) as UploadResponse;
 		if (!response.ok || !payload.media) throw new Error(payload.error || `上传失败（${response.status}）`);
-		statusMessage.textContent = '上传成功。请检查字段后粘贴到对应实验模板。';
+		statusMessage.textContent = payload.deduplicated ? '相同文件已存在，已返回原记录；本次填写不会覆盖原字段。' : '上传成功。请检查字段后粘贴到对应实验模板。';
 		result.hidden = false;
-		resultNote.textContent = payload.metadataStatus === 'pending_db' ? '文件已进入 R2，但媒体索引数据库尚未绑定；请先保存下面字段。' : `媒体 ID：${payload.media.id}`;
+		resultNote.textContent = `媒体 ID：${payload.media.id}。私有或待审核文件请在媒体管理中预览。`;
 		snippet.textContent = makeSnippet(payload.media);
 	} catch (error) {
 		statusMessage.textContent = error instanceof Error ? error.message : '上传失败，请稍后重试。';

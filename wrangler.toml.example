@@ -9,10 +9,11 @@ binding = "ASSETS"
 # Copy this file to wrangler.toml only after creating the named resources.
 # Optional standalone Worker adapter. Production uses Cloudflare Pages + Pages Functions.
 
+# Both buckets must have r2.dev and custom public domains disabled.
 [[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "xiqing-agri-media"
-preview_bucket_name = "xiqing-agri-media-preview"
+binding = "MEDIA_PRIVATE_BUCKET"
+bucket_name = "REPLACE_WITH_PRIVATE_BUCKET"
+preview_bucket_name = "REPLACE_WITH_PRIVATE_PREVIEW_BUCKET"
 
 [[d1_databases]]
 binding = "DB"
@@ -21,7 +22,6 @@ database_id = "REPLACE_WITH_D1_DATABASE_ID"
 preview_database_id = "REPLACE_WITH_D1_PREVIEW_DATABASE_ID"
 
 [vars]
-MEDIA_PUBLIC_BASE_URL = "https://media.xiqingagri.com"
 DEFAULT_TIMEZONE_OFFSET = "+08:00"
 
 # If this optional Worker is deployed, set this as an encrypted Worker secret, not in this file:

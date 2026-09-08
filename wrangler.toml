@@ -6,8 +6,10 @@ main = "src/worker.ts"
 directory = "./dist"
 binding = "ASSETS"
 
+# Optional standalone Worker configuration; production uses Pages dashboard bindings.
+# Existing empty bucket verified private on 2026-09-06; no media migration required.
 [[r2_buckets]]
-binding = "MEDIA_BUCKET"
+binding = "MEDIA_PRIVATE_BUCKET"
 bucket_name = "xiqing-agri-media"
 
 [[d1_databases]]
@@ -16,7 +18,6 @@ database_name = "xiqing-agri-media"
 database_id = "0bb78b95-7d03-4735-810c-0dad95ea0b55"
 
 [vars]
-MEDIA_PUBLIC_BASE_URL = "https://media.xiqingagri.com"
 DEFAULT_TIMEZONE_OFFSET = "+08:00"
 
 # MEDIA_UPLOAD_TOKEN must be added as an encrypted Cloudflare secret.
