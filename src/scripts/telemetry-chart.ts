@@ -97,7 +97,7 @@ function setupDashboard(root: HTMLElement): void {
 			const x = margin.left + (plotWidth * hour) / 24;
 			chart.append(createSvg('line', { x1: String(x), x2: String(x), y1: String(margin.top), y2: String(height - margin.bottom), class: 'telemetry-chart__grid telemetry-chart__grid--vertical' }));
 			const label = createSvg('text', { x: String(x), y: String(height - 14), 'text-anchor': 'middle', class: 'telemetry-chart__axis-label' });
-			label.textContent = `${String(hour).padStart(2, '0')}:00`;
+			label.textContent = String(hour).padStart(2, '0');
 			chart.append(label);
 		}
 		chart.append(createSvg('line', { x1: String(margin.left), x2: String(margin.left), y1: String(margin.top), y2: String(height - margin.bottom), class: 'telemetry-chart__axis' }));
