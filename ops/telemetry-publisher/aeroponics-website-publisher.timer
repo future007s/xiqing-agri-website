@@ -1,0 +1,11 @@
+[Unit]
+Description=Publish aeroponics website summaries every ten minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+AccuracySec=30s
+Unit=aeroponics-website-publisher.service
+
+[Install]
+WantedBy=timers.target

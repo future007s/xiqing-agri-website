@@ -1,0 +1,23 @@
+[Unit]
+Description=Publish ten-minute aeroponics summaries to Xiqing website
+After=network-online.target aeroponics-timescaledb.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=jim
+Group=jim
+WorkingDirectory=/srv/aeroponics/app/website-publisher
+EnvironmentFile=/srv/aeroponics/config/postgres.env
+EnvironmentFile=/srv/aeroponics/config/website-publisher.env
+Environment=PGHOST=127.0.0.1
+Environment=PGPORT=5432
+Environment=PGCONNECT_TIMEOUT=8
+ExecStart=/usr/bin/python3 /srv/aeroponics/app/website-publisher/website_publisher.py
+NoNewPrivileges=true
+UMask=0077
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/mnt/data4t/aeroponics/telemetry
+TimeoutStartSec=180
