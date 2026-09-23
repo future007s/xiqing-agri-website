@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TelemetryDashboard from '../../components/TelemetryDashboard.astro';
+---
+
+<BaseLayout
+	title="Sensor Data | XIQING AGRI"
+	description="Explore daily ten-minute sensor summaries from XIQING AGRI by device or growing area."
+	locale="en"
+	alternatePath="/data"
+>
+	<TelemetryDashboard locale="en" />
+</BaseLayout>

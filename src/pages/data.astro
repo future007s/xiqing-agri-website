@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TelemetryDashboard from '../components/TelemetryDashboard.astro';
+---
+
+<BaseLayout
+	title="传感数据 | 曦清农业 XIQING AGRI"
+	description="按天查看曦清农业现场传感器的温度、湿度、光照、二氧化碳等十分钟摘要。"
+	alternatePath="/en/data"
+>
+	<TelemetryDashboard locale="zh" />
+</BaseLayout>

@@ -1,0 +1,68 @@
+
+---
+interface Props {
+	locale?: 'zh' | 'en';
+}
+
+const { locale = 'zh' } = Astro.props;
+const isEnglish = locale === 'en';
+---
+
+<main>
+	<section class="page-hero shell" aria-labelledby="telemetry-page-title">
+		<div class="page-hero__heading">
+			<h1 id="telemetry-page-title">{isEnglish ? 'Sensor data' : '传感数据'}</h1>
+			<p>{isEnglish ? 'PUBLIC MEASUREMENTS / 10 MIN' : '公开测量 / 每 10 分钟'}</p>
+		</div>
+		<p class="page-hero__intro">
+			{isEnglish
+				? 'Explore verified sensor summaries by day, device, or growing area. Each point is a ten-minute average of observed numerical samples.'
+				: '按日期、设备或场地查看经过质量标记的传感器摘要。每个点为 10 分钟内有效数值样本的平均值。'}
+		</p>
+	</section>
+
+	<section class="section telemetry-dashboard" aria-labelledby="telemetry-chart-heading" data-telemetry-dashboard data-locale={locale}>
+		<div class="shell">
+			<div class="section-heading">
+				<p class="eyebrow">{isEnglish ? 'FIELD MEASUREMENTS' : '现场测量'}</p>
+				<h2 id="telemetry-chart-heading">{isEnglish ? 'Daily trends' : '每日变化'}</h2>
+			</div>
+
+			<div class="telemetry-controls" aria-label={isEnglish ? 'Chart filters' : '图表筛选'}>
+				<label>
+					<span>{isEnglish ? 'Measurement' : '传感器类别'}</span>
+					<select data-metric-select disabled><option>{isEnglish ? 'Loading…' : '读取中…'}</option></select>
+				</label>
+				<label>
+					<span>{isEnglish ? 'Day' : '日期'}</span>
+					<input data-day-select type="date" />
+				</label>
+				<fieldset>
+					<legend>{isEnglish ? 'Group lines by' : '曲线按…显示'}</legend>
+					<div class="telemetry-mode" role="group">
+						<button type="button" data-group-by="device" aria-pressed="true">{isEnglish ? 'Device' : '设备'}</button>
+						<button type="button" data-group-by="site" aria-pressed="false">{isEnglish ? 'Growing area' : '场地'}</button>
+					</div>
+				</fieldset>
+			</div>
+
+			<p class="telemetry-status" data-chart-status aria-live="polite">
+				{isEnglish ? 'Loading available measurements…' : '正在读取可用传感器类别…'}
+			</p>
+			<div class="telemetry-chart-card">
+				<div class="telemetry-chart__unit" data-chart-unit></div>
+				<svg class="telemetry-chart" data-chart role="img" aria-label={isEnglish ? 'Daily sensor line chart' : '每日传感器折线图'} viewBox="0 0 1000 440" preserveAspectRatio="none"></svg>
+				<div class="telemetry-legend" data-chart-legend></div>
+			</div>
+			<p class="telemetry-chart-note">
+				{isEnglish
+					? 'The horizontal axis marks each hour; plotted samples are spaced ten minutes apart. Gaps mean no valid reading was available. Hover or focus a point to see its range and sample count. Public history is limited to the latest 30 days.'
+					: '横轴按小时标注，曲线点间隔为 10 分钟。空档表示该时段没有有效读数。将鼠标移到数据点可查看范围和样本数。公开历史最多保留最近 30 天。'}
+			</p>
+		</div>
+	</section>
+</main>
+
+<script>
+	import '../scripts/telemetry-chart';
+</script>
