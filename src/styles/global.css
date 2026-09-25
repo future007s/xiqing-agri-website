@@ -451,3 +451,30 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 @media (prefers-reduced-motion: reduce) {
 	*, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+/* Private on-site controls; this link only opens the Tailscale-protected host. */
+.field-management-link {
+	display: inline-flex;
+	align-items: center;
+	gap: .35rem;
+	padding: .34rem .55rem;
+	border: 1px solid var(--signal-dark);
+	color: var(--ink);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+	font-size: .6rem;
+	font-weight: 700;
+	letter-spacing: .025em;
+	line-height: 1.2;
+	white-space: nowrap;
+	transition: background-color 150ms ease, color 150ms ease;
+}
+.field-management-link:hover { background: var(--signal-dark); color: var(--white); }
+.field-management-link__compact { display: none; }
+@media (max-width: 560px) {
+	.field-management-link { gap: .2rem; padding: .3rem .2rem; border: 0; border-bottom: 1px solid var(--signal-dark); font-size: .56rem; }
+	.field-management-link__full { display: none; }
+	.field-management-link__compact { display: inline; }
+}
+@media (max-width: 390px) {
+	.field-management-link { gap: .1rem; font-size: .5rem; }
+}

@@ -46,6 +46,18 @@ const isActive = (href: string) => {
 					<a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
 				))}
 			</nav>
+			<a
+				class="field-management-link"
+				href="https://aeroponics-node-h110.tail6677b4.ts.net:8443/"
+				target="_blank"
+				rel="noopener noreferrer"
+				title={isEnglish ? 'Private access; connect to Tailscale first' : '私有入口，请先连接 Tailscale'}
+				aria-label={isEnglish ? 'Field management, requires Tailscale' : '现场管理，需要连接 Tailscale'}
+			>
+				<span class="field-management-link__full">{isEnglish ? 'Field management' : '现场管理'}</span>
+				<span class="field-management-link__compact" aria-hidden="true">{isEnglish ? 'Field' : '管理'}</span>
+				<span aria-hidden="true">↗</span>
+			</a>
 			{alternatePath && (
 				<a
 					class="language-switch"
