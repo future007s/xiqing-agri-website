@@ -51,7 +51,9 @@ const isEnglish = locale === 'en';
 			</p>
 			<div class="telemetry-chart-card">
 				<div class="telemetry-chart__unit" data-chart-unit></div>
+				<div class="telemetry-reference-legend" data-chart-reference-legend hidden></div>
 				<svg class="telemetry-chart" data-chart role="img" aria-label={isEnglish ? 'Daily sensor line chart' : '每日传感器折线图'} viewBox="0 0 1000 440" preserveAspectRatio="none"></svg>
+				<div class="telemetry-point-tooltip" id="telemetry-point-tooltip" data-chart-tooltip role="tooltip" hidden></div>
 				<div class="telemetry-legend" data-chart-legend></div>
 			</div>
 			<p class="telemetry-chart-note">

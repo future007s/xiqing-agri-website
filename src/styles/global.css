@@ -219,9 +219,22 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 .telemetry-chart__grid--vertical { opacity: .4; stroke-dasharray: 2 5; }
 .telemetry-chart__axis { stroke: var(--muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .telemetry-chart__axis-label { fill: var(--muted); font-family: ui-monospace, monospace; font-size: 12px; }
+.telemetry-chart__reference-line { stroke: var(--ink); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.telemetry-chart__reference-line--upper { stroke-dasharray: none; }
+.telemetry-chart__reference-line--lower { stroke-dasharray: 6 4; opacity: .72; }
 .telemetry-chart__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.telemetry-chart__point { stroke: var(--paper); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.telemetry-chart__point:focus { r: 6; outline: none; }
+.telemetry-chart__point { stroke: var(--paper); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+.telemetry-chart__point-hit { fill: transparent; stroke: transparent; cursor: crosshair; pointer-events: all; }
+.telemetry-chart__point-hit:focus { outline: none; }
+.telemetry-chart__point-hit:focus + .telemetry-chart__point { r: 6; }
+.telemetry-reference-legend { display: flex; flex-wrap: wrap; gap: .35rem 1rem; padding: .2rem 0 .45rem 5rem; color: var(--muted); font-size: .68rem; }
+.telemetry-reference-legend[hidden] { display: none; }
+.telemetry-reference-legend__item { display: inline-flex; align-items: center; gap: .4rem; }
+.telemetry-reference-legend__line { display: inline-block; width: 1.5rem; border-top: 2px solid var(--ink); }
+.telemetry-reference-legend__line--lower { border-top-style: dashed; opacity: .72; }
+.telemetry-chart-card { position: relative; }
+.telemetry-point-tooltip { position: absolute; z-index: 2; max-width: min(280px, calc(100% - 1rem)); padding: .55rem .7rem; border: 1px solid var(--paper); background: var(--ink); color: var(--paper); font-size: .72rem; line-height: 1.55; white-space: pre-line; pointer-events: none; box-shadow: 0 3px 12px rgb(0 0 0 / 18%); }
+.telemetry-point-tooltip[hidden] { display: none; }
 .telemetry-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; padding: .5rem .3rem .2rem; }
 .telemetry-legend__item { display: inline-flex; align-items: center; gap: .4rem; font-size: .7rem; }
 .telemetry-legend__item i { width: .55rem; height: .55rem; border-radius: 50%; }

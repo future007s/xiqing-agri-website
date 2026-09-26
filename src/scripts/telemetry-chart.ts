@@ -72,12 +72,37 @@ function setupDashboard(root: HTMLElement): void {
 	const chart = root.querySelector<SVGSVGElement>('[data-chart]');
 	const legend = root.querySelector<HTMLDivElement>('[data-chart-legend]');
 	const unitLabel = root.querySelector<HTMLDivElement>('[data-chart-unit]');
+	const referenceLegend = root.querySelector<HTMLDivElement>('[data-chart-reference-legend]');
+	const tooltip = root.querySelector<HTMLDivElement>('[data-chart-tooltip]');
+	const chartCard = root.querySelector<HTMLDivElement>('.telemetry-chart-card');
 	const status = root.querySelector<HTMLParagraphElement>('[data-chart-status]');
 	const modeButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-group-by]')];
-	if (!metricSelect || !daySelect || !chart || !legend || !unitLabel || !status) return;
+	if (!metricSelect || !daySelect || !chart || !legend || !unitLabel || !referenceLegend || !tooltip || !chartCard || !status) return;
 	const say = (zh: string, en: string) => isEnglish ? en : zh;
 	const setStatus = (message: string) => { status.textContent = message; };
-	const clearChart = () => { chart.replaceChildren(); legend.replaceChildren(); unitLabel.textContent = ''; };
+	const hideTooltip = () => { tooltip.hidden = true; };
+	const clearChart = () => {
+		chart.replaceChildren();
+		legend.replaceChildren();
+		referenceLegend.replaceChildren();
+		referenceLegend.hidden = true;
+		unitLabel.textContent = '';
+		hideTooltip();
+	};
+	const showTooltip = (target: SVGCircleElement, content: string, event?: PointerEvent) => {
+		tooltip.textContent = content;
+		tooltip.hidden = false;
+		const cardRect = chartCard.getBoundingClientRect();
+		const pointRect = target.getBoundingClientRect();
+		const anchorX = event?.clientX ?? pointRect.left + pointRect.width / 2;
+		const anchorY = event?.clientY ?? pointRect.top + pointRect.height / 2;
+		const inset = 8;
+		const left = Math.max(inset, Math.min(anchorX - cardRect.left + 12, chartCard.clientWidth - tooltip.offsetWidth - inset));
+		let top = anchorY - cardRect.top - tooltip.offsetHeight - 12;
+		if (top < inset) top = Math.min(anchorY - cardRect.top + 12, chartCard.clientHeight - tooltip.offsetHeight - inset);
+		tooltip.style.left = `${left}px`;
+		tooltip.style.top = `${Math.max(inset, top)}px`;
+	};
 	let groupBy = 'device';
 	const drawChart = (data: ChartResponse) => {
 		clearChart();
@@ -86,6 +111,23 @@ function setupDashboard(root: HTMLElement): void {
 			? `${say('通用农业参考刻度', 'General agriculture reference')}: ${referenceRange[0]}–${referenceRange[1]}`
 			: say('按当日实测范围定标', 'Scaled to observed values');
 		unitLabel.textContent = data.unit ? `${say('单位', 'Unit')}: ${data.unit} · ${referenceText}` : referenceText;
+		if (referenceRange) {
+			referenceLegend.hidden = false;
+			for (const [kind, label, value] of [
+				['upper', say('上限', 'Upper limit'), referenceRange[1]],
+				['lower', say('下限', 'Lower limit'), referenceRange[0]],
+			] as const) {
+				const item = document.createElement('span');
+				item.className = 'telemetry-reference-legend__item';
+				const marker = document.createElement('i');
+				marker.className = `telemetry-reference-legend__line telemetry-reference-legend__line--${kind}`;
+				marker.setAttribute('aria-hidden', 'true');
+				const text = document.createElement('span');
+				text.textContent = `${label} ${value} ${data.unit}`;
+				item.append(marker, text);
+				referenceLegend.append(item);
+			}
+		}
 		const width = 1000;
 		const height = 440;
 		const margin = { left: 82, right: 22, top: 18, bottom: 46 };
@@ -93,7 +135,12 @@ function setupDashboard(root: HTMLElement): void {
 		const plotHeight = height - margin.top - margin.bottom;
 		const values = data.series.flatMap((series) => series.points
 			.map((point) => point.average).filter((value): value is number => typeof value === 'number' && Number.isFinite(value)));
-		if (!values.length) return 0;
+		if (!values.length) {
+			unitLabel.textContent = '';
+			referenceLegend.replaceChildren();
+			referenceLegend.hidden = true;
+			return 0;
+		}
 		let low = Math.min(...values);
 		let high = Math.max(...values);
 		if (referenceRange) {
@@ -116,6 +163,18 @@ function setupDashboard(root: HTMLElement): void {
 			const label = createSvg('text', { x: String(margin.left - 12), y: String(y + 4), 'text-anchor': 'end', class: 'telemetry-chart__axis-label' });
 			label.textContent = value.toFixed(decimalPlaces);
 			chart.append(label);
+		}
+		if (referenceRange) {
+			for (const [value, kind] of [[referenceRange[1], 'upper'], [referenceRange[0], 'lower']] as const) {
+				const y = margin.top + (plotHeight * (high - value)) / (high - low);
+				chart.append(createSvg('line', {
+					x1: String(margin.left),
+					x2: String(width - margin.right),
+					y1: String(y),
+					y2: String(y),
+					class: `telemetry-chart__reference-line telemetry-chart__reference-line--${kind}`,
+				}));
+			}
 		}
 		for (let hour = 0; hour < 24; hour += 1) {
 			const x = margin.left + (plotWidth * hour) / 24;
@@ -149,15 +208,22 @@ function setupDashboard(root: HTMLElement): void {
 			if (!validPoints.length) return;
 			chart.append(createSvg('path', { d: path.trim(), stroke: color, class: 'telemetry-chart__line' }));
 			for (const { point, average, x, y } of validPoints) {
-				const circle = createSvg('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: '2.7', fill: color, tabindex: '0', role: 'graphics-symbol', class: 'telemetry-chart__point' });
 				const local = new Date(Date.parse(point.at) + 8 * 60 * 60 * 1000);
 				const time = `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
-				const detail = `${time} · ${average.toFixed(decimalPlaces)} ${data.unit} · ${say('范围', 'range')} ${point.minimum ?? '—'}–${point.maximum ?? '—'} · ${say('有效样本', 'valid samples')} ${point.validCount}/${point.totalCount}`;
-				circle.setAttribute('aria-label', `${series.label}, ${detail}`);
-				const title = createSvg('title');
-				title.textContent = `${series.label}: ${detail}`;
-				circle.append(title);
-				chart.append(circle);
+				const formatValue = (value: number | null) => typeof value === 'number' && Number.isFinite(value) ? value.toFixed(decimalPlaces) : '—';
+				const valueText = `${average.toFixed(decimalPlaces)} ${data.unit}`;
+				const rangeText = `${formatValue(point.minimum)}–${formatValue(point.maximum)} ${data.unit}`;
+				const details = `${time} · ${valueText} · ${say('10 分钟范围', '10-minute range')} ${rangeText} · ${say('有效样本', 'valid samples')} ${point.validCount}/${point.totalCount}`;
+				const hitArea = createSvg('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: '7', tabindex: '0', role: 'graphics-symbol', class: 'telemetry-chart__point-hit' }) as SVGCircleElement;
+				hitArea.setAttribute('aria-label', `${series.label}: ${details}`);
+				hitArea.setAttribute('aria-describedby', tooltip.id);
+				hitArea.addEventListener('pointerenter', (event) => showTooltip(hitArea, `${series.label}\n${details}`, event));
+				hitArea.addEventListener('pointermove', (event) => showTooltip(hitArea, `${series.label}\n${details}`, event));
+				hitArea.addEventListener('pointerleave', hideTooltip);
+				hitArea.addEventListener('focus', () => showTooltip(hitArea, `${series.label}\n${details}`));
+				hitArea.addEventListener('blur', hideTooltip);
+				chart.append(hitArea);
+				chart.append(createSvg('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: '2.7', fill: color, class: 'telemetry-chart__point' }));
 			}
 			const entry = document.createElement('span');
 			entry.className = 'telemetry-legend__item';
