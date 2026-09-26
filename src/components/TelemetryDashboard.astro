@@ -56,8 +56,8 @@ const isEnglish = locale === 'en';
 			</div>
 			<p class="telemetry-chart-note">
 				{isEnglish
-					? 'The horizontal axis marks each hour; plotted samples are spaced ten minutes apart. Gaps mean no valid reading was available. Hover or focus a point to see its range and sample count. Public history is limited to the latest 30 days.'
-					: '横轴按小时标注，曲线点间隔为 10 分钟。空档表示该时段没有有效读数。将鼠标移到数据点可查看范围和样本数。公开历史最多保留最近 30 天。'}
+					? 'The horizontal axis marks each hour; plotted samples are spaced ten minutes apart. The vertical axis uses general agriculture display ranges and expands when readings fall outside them. These are not crop- or growth-stage-specific targets; metrics without a general range use the day’s observed range. Gaps mean no valid reading was available. Hover or focus a point to see its range and sample count. Public history is limited to the latest 30 days.'
+					: '横轴按小时标注，曲线点间隔为 10 分钟。纵轴采用通用农业展示范围，读数超出时会扩展坐标轴；这些刻度不是特定作物或生育期的控制目标。没有通用基准的指标按当日实测范围定标。空档表示该时段没有有效读数。将鼠标移到数据点可查看范围和样本数。公开历史最多保留最近 30 天。'}
 			</p>
 		</div>
 	</section>

@@ -9,7 +9,7 @@ type ChartPoint = {
 	quality: string;
 };
 type ChartSeries = { id: string; label: string; points: ChartPoint[] };
-type ChartResponse = { unit: string; series: ChartSeries[] };
+type ChartResponse = { metric: string; unit: string; series: ChartSeries[] };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 const colors = ['#6f7952', '#497681', '#a06e4a', '#6c5d8d', '#a74f4b', '#6b7374', '#b08d37', '#3e6c4f'];
@@ -24,6 +24,23 @@ const metricLabels: Record<string, { zh: string; en: string }> = {
 	pressure: { zh: '压力', en: 'Pressure' },
 	pressure_p1: { zh: '泵出口压力', en: 'Pump outlet pressure' },
 	pressure_p2: { zh: '远端压力', en: 'Remote pressure' },
+};
+
+// General display baselines for common horticulture measurements, not crop setpoints.
+// Pressure remains data-scaled because its useful range depends on the pump, nozzle, and unit.
+const referenceAxisRanges: Record<string, Record<string, [number, number]>> = {
+	air_temperature: { '°c': [10, 35], degc: [10, 35] },
+	air_humidity: { '%rh': [30, 90], '%': [30, 90] },
+	co2_ppm: { ppm: [300, 1500] },
+	illuminance: { lx: [0, 100_000], lux: [0, 100_000] },
+	ppfd: { 'µmol/m²·s': [0, 2000], 'µmol/m²/s': [0, 2000], 'µmol/m2/s': [0, 2000] },
+	ec: { 'ms/cm': [0, 4], 'ds/m': [0, 4], 'µs/cm': [0, 4000] },
+	ph: { ph: [5, 7] },
+};
+
+const referenceRangeFor = (metric: string, unit: string): [number, number] | undefined => {
+	const normalizedUnit = unit.trim().toLowerCase().replaceAll('μ', 'µ').replace(/\s+/g, '');
+	return referenceAxisRanges[metric]?.[normalizedUnit];
 };
 
 const dayInChina = (date = new Date()): string =>
@@ -64,7 +81,11 @@ function setupDashboard(root: HTMLElement): void {
 	let groupBy = 'device';
 	const drawChart = (data: ChartResponse) => {
 		clearChart();
-		unitLabel.textContent = data.unit ? `${say('单位', 'Unit')}: ${data.unit}` : '';
+		const referenceRange = referenceRangeFor(data.metric, data.unit);
+		const referenceText = referenceRange
+			? `${say('通用农业参考刻度', 'General agriculture reference')}: ${referenceRange[0]}–${referenceRange[1]}`
+			: say('按当日实测范围定标', 'Scaled to observed values');
+		unitLabel.textContent = data.unit ? `${say('单位', 'Unit')}: ${data.unit} · ${referenceText}` : referenceText;
 		const width = 1000;
 		const height = 440;
 		const margin = { left: 82, right: 22, top: 18, bottom: 46 };
@@ -75,7 +96,10 @@ function setupDashboard(root: HTMLElement): void {
 		if (!values.length) return 0;
 		let low = Math.min(...values);
 		let high = Math.max(...values);
-		if (low === high) {
+		if (referenceRange) {
+			low = Math.min(low, referenceRange[0]);
+			high = Math.max(high, referenceRange[1]);
+		} else if (low === high) {
 			const pad = Math.max(Math.abs(low) * 0.05, 1);
 			low -= pad;
 			high += pad;
