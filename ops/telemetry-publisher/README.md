@@ -1,20 +1,5 @@
-# 现场传感器汇总发布器
+# 现场发布器源码已迁出网站仓库
 
-该目录保存现场 PostgreSQL/TimescaleDB 到官网 D1 投影的发布程序。程序只读取原始传感器数据，按十分钟生成最小值、最大值、平均值和质量计数；官网只保留最近 30 天的汇总结果。
+唯一维护位置：私有[曦清农业系统仓库 `ingestor/`](https://github.com/future007s/xiqing-agri-system/tree/main/ingestor)。该目录下原有 Python 程序、运行脚本及 systemd 模板与迁入版本的 SHA-256 完全一致，因此网站仓库删除了重复副本。现场主机已安装的文件**没有在本次仓库整理中修改或重启**。
 
-## 运行配置
-
-运行时读取以下两个本地私有配置文件，文件内容不得提交到 Git：
-
-- `/srv/aeroponics/config/postgres.env`
-- `/srv/aeroponics/config/website-publisher.env`
-
-后者需要提供 `TELEMETRY_PUBLISH_URL`、`TELEMETRY_PUBLISH_TOKEN` 和 `TELEMETRY_STATE_PATH`。上传密钥必须与 Cloudflare Pages 的同名机密变量一致。
-
-现场主机当前使用 `jim` 用户的 cron，每十分钟执行一次：
-
-```cron
-*/10 * * * * /srv/aeroponics/app/website-publisher/run.sh >> /srv/aeroponics/app/website-publisher/publisher.log 2>&1
-```
-
-如以后改为系统级 systemd，可使用本目录中的 service 与 timer 模板；启用前应再次核对现场数据库服务名和状态目录写权限。
+本仓库仍负责网站侧公开数据接收接口、D1 迁移和页面。今后修改发布器应在系统仓库提交，再按现场部署流程核对远端校验值；不要重新复制到这里。

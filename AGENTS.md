@@ -8,6 +8,10 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+## Repository boundary
+
+This repository is the canonical website source only. The canonical controller, field ingestors, PostgreSQL/TimescaleDB model, and telemetry publisher live in the private `future007s/xiqing-agri-system` repository. For cross-repository work, fetch both GitHub `main` branches and record both commit SHAs. Do not copy the publisher or field control code back into this public website repository. Pushing this repository's `main` may trigger a production Cloudflare Pages build.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build
