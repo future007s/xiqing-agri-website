@@ -2,9 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import { normalizeSample } from '../functions/_shared/telemetry.ts';
+import { normalizeSample, sampleBindings, TELEMETRY_UPSERT_SQL } from '../functions/_shared/telemetry.ts';
 import { onRequestPost as publish } from '../functions/api/telemetry/publish.ts';
 import { onRequestGet as chart } from '../functions/api/telemetry/index.ts';
+import retention from '../workers/telemetry-retention/index.ts';
 
 class D1 {
   connection = new DatabaseSync(':memory:');
@@ -15,7 +16,7 @@ class D1 {
       sql,
       bind(...values) { return { ...this, values }; },
       async all() { return { results: db.connection.prepare(sql).all(...this.values) }; },
-      async run() { return db.connection.prepare(sql).run(...this.values); },
+      async run() { return { meta: { changes: db.connection.prepare(sql).run(...this.values).changes } }; },
     };
   }
   async batch(statements) { return statements.map((statement) => this.connection.prepare(statement.sql).run(...statement.values)); }
@@ -71,4 +72,26 @@ test('daily chart returns separate series per sensor and supports site grouping'
   const site = await chart(context(environment, '/api/telemetry?day=2026-09-23&metric=air_temperature&unit=%C2%B0C&groupBy=site'));
   assert.equal((await site.json()).series.length, 2);
   assert.equal((await chart(context(environment, '/api/telemetry?day=2026-09-24&metric=air_temperature'))).status, 400);
+});
+
+test('scheduled retention alone removes expired rows while uploads filter expired inputs', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-10-03T00:00:00Z') });
+  const environment = env();
+  for (const input of [
+    sample({ sensorId: 'expired-existing', bucketStart: '2026-09-02T23:50:00Z' }),
+    sample({ sensorId: 'retention-boundary', bucketStart: '2026-09-03T00:00:00Z' }),
+  ]) {
+    environment.DB.connection.prepare(TELEMETRY_UPSERT_SQL).run(...sampleBindings(normalizeSample(input)));
+  }
+
+  const response = await publish(context(environment, '/api/telemetry/publish', 'POST', { samples: [
+    sample(), sample({ sensorId: 'expired-incoming', bucketStart: '2026-09-02T23:50:00Z' }),
+  ] }));
+  assert.equal(response.status, 202);
+  assert.deepEqual(await response.json(), { accepted: 1, expired: 1 });
+  const sensors = () => environment.DB.connection.prepare('SELECT sensor_id FROM telemetry_10m ORDER BY sensor_id').all().map((row) => row.sensor_id);
+  assert.deepEqual(sensors(), ['expired-existing', 'retention-boundary', 'sensor-1']);
+
+  await retention.scheduled({ cron: '*/10 * * * *', scheduledTime: Date.now() }, environment);
+  assert.deepEqual(sensors(), ['retention-boundary', 'sensor-1']);
 });

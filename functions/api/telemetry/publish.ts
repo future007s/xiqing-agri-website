@@ -48,7 +48,6 @@ export async function onRequestPost(context: TelemetryContext): Promise<Response
 				env.DB!.prepare(TELEMETRY_UPSERT_SQL).bind(...sampleBindings(row)));
 			await env.DB.batch(statements);
 		}
-		await env.DB.prepare('DELETE FROM telemetry_10m WHERE bucket_start < ?').bind(expiration).run();
 		return json({ accepted: currentRows.length, expired: expiredCount }, 202);
 	} catch {
 		return json({ error: '数据写入未完成，可使用相同数据安全重试。' }, 503);
