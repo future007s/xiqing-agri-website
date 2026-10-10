@@ -23,6 +23,7 @@ npm run build
 - `src/content.config.ts`：网站内容字段校验；实际示例见 `t01-001.md`。
 - `functions/api/`：媒体与公开数据接口；`migrations/`：D1 网站侧迁移。
 - `workers/telemetry-retention/`：网站侧公开摘要保留任务。
+- [现场运行与维护入口](docs/field-management.md)：官网链接到本地私有页面，实时读数和控制服务不经过官网。
 - `ops/telemetry-publisher/README.md`：现场发布器已迁至系统仓库的说明，不再存两份源码。
 
 实验原始记录、未审核观察、照片/视频原件及运行日志不应直接提交进网站仓库。媒体对象保存在 R2，D1 保存索引和审核后的公开读模型；官网只展示允许公开的内容。详见[实验发布入口](docs/experiment-record-template.md)、[媒体边界](docs/media-storage-convention.md)和[遥测边界](docs/telemetry-data-design.md)。
