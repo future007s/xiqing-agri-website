@@ -134,6 +134,6 @@ test('scheduled retention alone removes expired rows while uploads filter expire
   const sensors = () => environment.DB.connection.prepare('SELECT sensor_id FROM telemetry_10m ORDER BY sensor_id').all().map((row) => row.sensor_id);
   assert.deepEqual(sensors(), ['expired-existing', 'retention-boundary', 'sensor-1']);
 
-  await retention.scheduled({ cron: '*/10 * * * *', scheduledTime: Date.now() }, environment);
+  await retention.scheduled({ cron: '10 0 * * *', scheduledTime: Date.now() }, environment);
   assert.deepEqual(sensors(), ['retention-boundary', 'sensor-1']);
 });
