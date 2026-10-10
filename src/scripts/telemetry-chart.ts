@@ -12,7 +12,8 @@ type ChartSeries = { id: string; label: string; points: ChartPoint[] };
 type ChartResponse = { metric: string; unit: string; series: ChartSeries[] };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
-const colors = ['#6f7952', '#497681', '#a06e4a', '#6c5d8d', '#a74f4b', '#6b7374', '#b08d37', '#3e6c4f'];
+// 优先使用蓝色与橙红色，避免相邻曲线都落在灰绿、灰蓝的近似色系。
+const colors = ['#0072b2', '#d55e00', '#00875a', '#8b43c5', '#c7256e', '#9c6b00', '#007f88', '#3b3b3b'];
 const metricLabels: Record<string, { zh: string; en: string }> = {
 	air_temperature: { zh: '温度', en: 'Air temperature' },
 	air_humidity: { zh: '相对湿度', en: 'Relative humidity' },
