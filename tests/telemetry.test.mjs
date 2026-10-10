@@ -2,9 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { normalizeSample, sampleBindings, TELEMETRY_UPSERT_SQL } from '../functions/_shared/telemetry.ts';
 import { onRequestPost as publish } from '../functions/api/telemetry/publish.ts';
 import { onRequestGet as chart } from '../functions/api/telemetry/index.ts';
+import { onRequestGet as metrics } from '../functions/api/telemetry/metrics.ts';
 import retention from '../workers/telemetry-retention/index.ts';
 
 class D1 {
@@ -38,6 +40,46 @@ const context = (environment, path, method = 'GET', body) => ({
     body: body === undefined ? undefined : JSON.stringify(body),
   }),
   params: {},
+});
+
+test('dashboard localizes canonical EC and solution temperature without changing units', () => {
+  const source = readFileSync('src/scripts/telemetry-chart.ts', 'utf8');
+  const labelMap = source.match(/const metricLabels[^=]*=\s*(\{[\s\S]*?\n\});/);
+  assert.ok(labelMap, 'dashboard label map exists');
+  const labels = runInNewContext(`(${labelMap[1]})`);
+  for (const [metric, zh, en, unit] of [
+    ['electrical_conductivity', '营养液电导率', 'Nutrient EC', 'µS/cm'],
+    ['solution_temperature', '液温', 'Solution temperature', '°C'],
+  ]) {
+    assert.equal(labels[metric].zh, zh);
+    assert.equal(labels[metric].en, en);
+    assert.equal(`${labels[metric].zh} (${unit})`, `${zh} (${unit})`);
+  }
+  assert.equal(labels.ec.zh, labels.electrical_conductivity.zh);
+});
+
+test('metric list merges historical labels and counts distinct sensors per metric and unit', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-10-03T00:00:00Z') });
+  const environment = env();
+  const inputs = [
+    sample({ metric: 'electrical_conductivity', metricLabel: 'electrical conductivity', unit: 'µS/cm' }),
+    sample({ metric: 'electrical_conductivity', metricLabel: '营养液电导率', unit: 'µS/cm', bucketStart: '2026-09-23T00:20:00Z' }),
+    sample({ metric: 'electrical_conductivity', metricLabel: '营养液电导率', unit: 'µS/cm', sensorId: 'sensor-2' }),
+    sample({ metric: 'electrical_conductivity', metricLabel: '营养液电导率', unit: 'mS/cm', sensorId: 'sensor-3' }),
+    sample({ metric: 'solution_temperature', metricLabel: 'solution temperature', unit: '°C' }),
+    sample({ metric: 'solution_temperature', metricLabel: '液温', unit: '°C', bucketStart: '2026-09-23T00:20:00Z' }),
+  ];
+  assert.equal((await publish(context(environment, '/api/telemetry/publish', 'POST', { samples: inputs }))).status, 202);
+  const response = await metrics(context(environment, '/api/telemetry/metrics'));
+  assert.equal(response.status, 200);
+  const result = (await response.json()).metrics;
+  assert.equal(result.length, 3);
+  const ec = result.find((row) => row.metric === 'electrical_conductivity' && row.unit === 'µS/cm');
+  assert.equal(ec.label, '营养液电导率');
+  assert.equal(ec.sensor_count, 2);
+  assert.equal(result.find((row) => row.unit === 'mS/cm').sensor_count, 1);
+  assert.equal(result.find((row) => row.metric === 'solution_temperature').label, '液温');
+  assert.equal(environment.DB.connection.prepare('SELECT count(*) AS n FROM telemetry_10m').get().n, inputs.length);
 });
 
 test('ten-minute sample validation rejects off-boundary timestamps and inconsistent aggregates', () => {

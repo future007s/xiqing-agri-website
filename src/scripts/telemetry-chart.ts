@@ -20,6 +20,8 @@ const metricLabels: Record<string, { zh: string; en: string }> = {
 	illuminance: { zh: '光照强度', en: 'Illuminance' },
 	ppfd: { zh: '光合有效辐射', en: 'PAR photon flux' },
 	ec: { zh: '营养液电导率', en: 'Nutrient EC' },
+	electrical_conductivity: { zh: '营养液电导率', en: 'Nutrient EC' },
+	solution_temperature: { zh: '液温', en: 'Solution temperature' },
 	ph: { zh: '酸碱度', en: 'pH' },
 	pressure: { zh: '压力', en: 'Pressure' },
 	pressure_p1: { zh: '泵出口压力', en: 'Pump outlet pressure' },
