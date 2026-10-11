@@ -44,7 +44,9 @@ const isEnglish = locale === 'en';
 		{englishUrl && <link rel="alternate" hreflang="en" href={englishUrl} />}
 		{chineseUrl && <link rel="alternate" hreflang="x-default" href={chineseUrl} />}
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="theme-color" content="#f2f0e9" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" content="#f2f0e9" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0b1116" media="(prefers-color-scheme: dark)" />
 		{noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
 		<meta property="og:type" content={type} />
 		<meta property="og:site_name" content={isEnglish ? 'XIQING AGRI' : '曦清农业 XIQING AGRI'} />

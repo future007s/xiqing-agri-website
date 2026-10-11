@@ -1,4 +1,5 @@
 :root {
+	color-scheme: light dark;
 	--paper: #f2f0e9;
 	--paper-deep: #e7e3d8;
 	--ink: #171915;
@@ -490,4 +491,24 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 }
 @media (max-width: 390px) {
 	.field-management-link { gap: .1rem; font-size: .5rem; }
+}
+
+/* System appearance. Keep the experiment sections dark in both modes. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0b1116; --paper-deep: #172129; --ink: #eaf0f4;
+    --muted: #a0adb5; --line: #34444e; --signal: #a2b48b;
+    --signal-dark: #acbd96; --white: #111a21;
+    color-scheme: dark;
+  }
+  .hero__intro > p:not(.formula), .prose p, .prose li,
+  .record-timeline p, .observation-card p, .analysis-card p { color: #c0cbd2; }
+  .section--dark, .record-section--dark {
+    --ink: #111a21; --white: #eaf0f4;
+    background: #111a21; color: #eaf0f4;
+  }
+  .badge--preparing, .badge--running, .badge--failed, .badge--suspended,
+  .badge--cancelled, .badge--void, .record-badge--attention,
+  .record-badge--critical, .status-dot { color: #172119; }
+  .trace-lineage li.is-known { color: #eaf0f4; }
 }
