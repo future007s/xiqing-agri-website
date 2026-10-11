@@ -511,4 +511,5 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
   .badge--cancelled, .badge--void, .record-badge--attention,
   .record-badge--critical, .status-dot { color: #172119; }
   .trace-lineage li.is-known { color: #eaf0f4; }
+  .button--dark:hover { color: #172119; }
 }
