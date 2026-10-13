@@ -1,13 +1,17 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import TelemetryDashboard from '../../components/TelemetryDashboard.astro';
 ---
 
 <BaseLayout
 	title="Sensor Data | XIQING AGRI"
-	description="Explore daily ten-minute sensor summaries from XIQING AGRI by device or growing area."
+	description="Sensor data is now available only through authenticated field management."
+	noindex
 	locale="en"
 	alternatePath="/data"
 >
-	<TelemetryDashboard locale="en" />
+	<main class="shell section">
+		<h1>Data has moved to field management</h1>
+		<p>Sensor data is restricted to authorized users. Connect to Tailscale and sign in to view daily trends.</p>
+		<a class="button" href="https://aeroponics-node-h110.tail6677b4.ts.net:8443/data?lang=en">Open field data</a>
+	</main>
 </BaseLayout>

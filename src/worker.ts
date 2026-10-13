@@ -9,6 +9,7 @@ import {
 	onRequestPost as manageAction,
 } from '../functions/api/media/manage';
 import type { MediaEnv } from '../functions/_shared/media';
+import { privateDataResponse } from '../functions/_shared/private-data';
 
 interface AssetsFetcher {
 	fetch(request: Request): Promise<Response>;
@@ -23,6 +24,7 @@ function routeParts(request: Request): string[] {
 export default {
 	async fetch(request: Request, env: WorkerEnv): Promise<Response> {
 		const parts = routeParts(request);
+		if (parts[0] === 'api' && parts[1] === 'telemetry') return privateDataResponse();
 
 		if (parts[0] === 'api' && parts[1] === 'media' && parts[2] === 'upload') {
 			if (request.method === 'OPTIONS') return uploadMediaOptions();

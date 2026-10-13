@@ -9,7 +9,7 @@ type ChartPoint = {
 	quality: string;
 };
 type ChartSeries = { id: string; label: string; points: ChartPoint[] };
-type ChartResponse = { metric: string; unit: string; series: ChartSeries[] };
+type ChartResponse = { metric: string; unit: string; series: ChartSeries[]; generatedAt?: string; stale?: boolean };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 // 优先使用蓝色与橙红色，避免相邻曲线都落在灰绿、灰蓝的近似色系。
@@ -43,7 +43,7 @@ const referenceAxisRanges: Record<string, Record<string, [number, number]>> = {
 
 const referenceRangeFor = (metric: string, unit: string): [number, number] | undefined => {
 	const normalizedUnit = unit.trim().toLowerCase().replaceAll('μ', 'µ').replace(/\s+/g, '');
-	return referenceAxisRanges[metric]?.[normalizedUnit];
+	return referenceAxisRanges[metric === 'electrical_conductivity' ? 'ec' : metric]?.[normalizedUnit];
 };
 
 const dayInChina = (date = new Date()): string =>
@@ -62,7 +62,8 @@ const createSvg = (tag: string, attributes: Record<string, string> = {}): SVGEle
 };
 
 async function responseJson<T>(url: string): Promise<T> {
-	const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+	const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(10000) });
+	if (response.status === 401) { location.href = '/login'; throw new Error('请先登录现场管理。'); }
 	const body = await response.json() as T & { error?: string };
 	if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
 	return body;
@@ -194,12 +195,16 @@ function setupDashboard(root: HTMLElement): void {
 			const color = colors[index % colors.length];
 			let path = '';
 			let activeSegment = false;
+			let lastPointAt: number | null = null;
 			const validPoints = series.points.flatMap((point) => {
 				if (typeof point.average !== 'number' || !Number.isFinite(point.average)) {
 					activeSegment = false;
 					return [];
 				}
 				const localDate = new Date(Date.parse(point.at) + 8 * 60 * 60 * 1000);
+				const pointAt = Date.parse(point.at);
+				if (lastPointAt !== null && pointAt - lastPointAt > 10 * 60 * 1000) activeSegment = false;
+				lastPointAt = pointAt;
 				const minute = localDate.getUTCHours() * 60 + localDate.getUTCMinutes();
 				const x = margin.left + (plotWidth * minute) / (24 * 60);
 				const y = margin.top + (plotHeight * (high - point.average)) / (high - low);
@@ -217,7 +222,7 @@ function setupDashboard(root: HTMLElement): void {
 				const valueText = `${average.toFixed(decimalPlaces)} ${data.unit}`;
 				const rangeText = `${formatValue(point.minimum)}–${formatValue(point.maximum)} ${data.unit}`;
 				const details = `${time} · ${valueText} · ${say('10 分钟范围', '10-minute range')} ${rangeText} · ${say('有效样本', 'valid samples')} ${point.validCount}/${point.totalCount}`;
-				const hitArea = createSvg('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: '7', tabindex: '0', role: 'graphics-symbol', class: 'telemetry-chart__point-hit' }) as SVGCircleElement;
+				const hitArea = createSvg('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: '3', tabindex: '0', role: 'graphics-symbol', class: 'telemetry-chart__point-hit' }) as SVGCircleElement;
 				hitArea.setAttribute('aria-label', `${series.label}: ${details}`);
 				hitArea.setAttribute('aria-describedby', tooltip.id);
 				hitArea.addEventListener('pointerenter', (event) => showTooltip(hitArea, `${series.label}\n${details}`, event));
@@ -252,6 +257,8 @@ function setupDashboard(root: HTMLElement): void {
 		clearChart();
 		try {
 			const data = await responseJson<ChartResponse>(`/api/telemetry?day=${encodeURIComponent(day)}&metric=${encodeURIComponent(metric)}&unit=${encodeURIComponent(unit)}&groupBy=${groupBy}`);
+			const sync = root.querySelector<HTMLElement>('[data-sync-status]');
+			if (sync && data.generatedAt) sync.textContent = `${say('摘要更新时间', 'Summary updated')}: ${new Date(data.generatedAt).toLocaleString(isEnglish ? 'en-GB' : 'zh-CN', {timeZone:'Asia/Shanghai'})}${data.stale ? say(' · 当前日摘要未及时刷新', ' · Today’s summary is stale') : ''}`;
 			const pointCount = drawChart(data) ?? 0;
 			if (!pointCount) {
 				setStatus(say('这一天没有有效读数；空档不会补成零。', 'No valid readings for this day. Missing intervals are left blank.'));
@@ -272,7 +279,7 @@ function setupDashboard(root: HTMLElement): void {
 			if (!metrics.length) {
 				metricSelect.disabled = true;
 				daySelect.disabled = true;
-				setStatus(say('暂无公开传感器数据。数据接入后会显示在这里。', 'No public sensor data is available yet. Measurements will appear here after data sync is enabled.'));
+				setStatus(say('暂无已登记传感器数据。数据接入后会显示在这里。', 'No registered sensor data is available yet. Measurements will appear after data sync.'));
 				return;
 			}
 			for (const metric of metrics) {

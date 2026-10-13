@@ -1,6 +1,6 @@
 # 曦清农业官网
 
-本仓库是 [xiqingagri.com](https://xiqingagri.com/) 的**唯一网站源码仓库**：Astro 页面、Cloudflare Pages Functions、D1/R2 网站迁移和公开数据接收接口。网站代码保持在这里，`main` 与 Cloudflare Pages 的构建部署关联。
+本仓库是 [xiqingagri.com](https://xiqingagri.com/) 的**唯一网站源码仓库**：Astro 页面、Cloudflare Pages Functions及D1/R2网站迁移。2026-10-13 起传感数据页移入登录后的本地现场管理，公开遥测查询与上传接口关闭；网站代码保持在这里，`main` 与 Cloudflare Pages 的构建部署关联。
 
 控制器固件、RS485/USB 采集、现场 PostgreSQL/TimescaleDB、MQTT 入库和现场数据发布器在另一个**私有**仓库 [xiqing-agri-system](https://github.com/future007s/xiqing-agri-system)。公开网站不能控制泵，D1 也不是高频原始数据的事实源。跨仓库修改时应记录两边的提交 SHA，不复制同一个服务的源码。
 
