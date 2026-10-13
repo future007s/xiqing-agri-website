@@ -394,7 +394,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 .site-footer p { margin-bottom: .2rem; }
 .site-footer__brand { font-size: 1.6rem; font-weight: 800; letter-spacing: -.05em; }
 .footer-label, .site-footer__meta { font-size: .58rem; color: #a6a89f; }
-.site-footer__contact a { border-bottom: 1px solid #6f7952; font-family: ui-monospace, monospace; font-size: .95rem; }
+.site-footer__contact a { border-bottom: 1px solid var(--signal-dark); font-family: ui-monospace, monospace; font-size: .95rem; }
 .site-footer__contact a:hover { color: var(--signal); }
 .site-footer__contact-note { color: #b9bbb3; font-size: .75rem; }
 .site-footer__meta { align-self: end; }
@@ -493,7 +493,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	.field-management-link { gap: .1rem; font-size: .5rem; }
 }
 
-/* System appearance. Keep the experiment sections dark in both modes. */
+/* System appearance. Keep experiment sections and the footer dark in both modes. */
 @media (prefers-color-scheme: dark) {
   :root {
     --paper: #0b1116; --paper-deep: #172129; --ink: #eaf0f4;
@@ -503,9 +503,12 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
   }
   .hero__intro > p:not(.formula), .prose p, .prose li,
   .record-timeline p, .observation-card p, .analysis-card p { color: #c0cbd2; }
-  .section--dark, .record-section--dark {
+  .section--dark, .record-section--dark, .site-footer {
     --ink: #111a21; --white: #eaf0f4;
     background: #111a21; color: #eaf0f4;
+  }
+  .site-footer .footer-label, .site-footer__meta, .site-footer__contact-note {
+    color: var(--muted);
   }
   .badge--preparing, .badge--running, .badge--failed, .badge--suspended,
   .badge--cancelled, .badge--void, .record-badge--attention,

@@ -15,6 +15,8 @@ npm run build
 
 构建输出为 `dist/`。在本机预览可运行 `npm run dev`。生产网站由 GitHub `main` 经 Cloudflare Pages 构建；Pages 的加密变量和 R2/D1 绑定在 Cloudflare 项目中维护，**不在仓库中保存真实口令**。`src/worker.ts` 与 `wrangler.toml` 是可选独立 Worker 适配，不是当前 Pages 生产入口。
 
+页面跟随系统明暗模式，页脚在深色模式使用深底浅字，不随正文颜色变量反转成浅底；浅色模式保留原深色页脚。构建后可运行 `npm run test:theme` 做浏览器专项检查（需可用的 Playwright，或通过 `THEME_TEST_PLAYWRIGHT` 指定其模块位置，`THEME_TEST_BROWSER` 指定浏览器）。测试使用构建产物并阻断网络，覆盖中英文页面、桌面/手机、无需刷新切换和文字对比度，不访问现场服务。
+
 ## 代码与内容入口
 
 - `src/pages/`、`src/components/`：中英文页面和组件。
