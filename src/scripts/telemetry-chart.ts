@@ -8,7 +8,7 @@ type ChartPoint = {
 	totalCount: number;
 	quality: string;
 };
-type ChartSeries = { id: string; label: string; points: ChartPoint[] };
+type ChartSeries = { id: string; label: string; sensorId?: string; points: ChartPoint[] };
 type ChartResponse = { metric: string; unit: string; series: ChartSeries[]; generatedAt?: string; stale?: boolean };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -61,15 +61,17 @@ const createSvg = (tag: string, attributes: Record<string, string> = {}): SVGEle
 	return element;
 };
 
-async function responseJson<T>(url: string): Promise<T> {
-	const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(10000) });
+async function responseJson<T>(url: string, signal = AbortSignal.timeout(10000)): Promise<T> {
+	const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin', signal });
 	if (response.status === 401) { location.href = '/login'; throw new Error('请先登录现场管理。'); }
 	const body = await response.json() as T & { error?: string };
 	if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
 	return body;
 }
 
-function setupDashboard(root: HTMLElement): void {
+type DashboardOptions = { metric?: string; unit?: string; sensorIds?: string[]; day?: string; pressureInMPa?: boolean };
+
+export function setupDashboard(root: HTMLElement, options: DashboardOptions = {}): () => void {
 	const isEnglish = root.dataset.locale === 'en';
 	const metricSelect = root.querySelector<HTMLSelectElement>('[data-metric-select]');
 	const daySelect = root.querySelector<HTMLInputElement>('[data-day-select]');
@@ -81,7 +83,9 @@ function setupDashboard(root: HTMLElement): void {
 	const chartCard = root.querySelector<HTMLDivElement>('.telemetry-chart-card');
 	const status = root.querySelector<HTMLParagraphElement>('[data-chart-status]');
 	const modeButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-group-by]')];
-	if (!metricSelect || !daySelect || !chart || !legend || !unitLabel || !referenceLegend || !tooltip || !chartCard || !status) return;
+	if (!metricSelect || !daySelect || !chart || !legend || !unitLabel || !referenceLegend || !tooltip || !chartCard || !status) return () => {};
+	let disposed = false, requestVersion = 0;
+	let pending: AbortController | undefined;
 	const say = (zh: string, en: string) => isEnglish ? en : zh;
 	const setStatus = (message: string) => { status.textContent = message; };
 	const hideTooltip = () => { tooltip.hidden = true; };
@@ -159,7 +163,7 @@ function setupDashboard(root: HTMLElement): void {
 			low -= pad;
 			high += pad;
 		}
-		const decimalPlaces = /ppm|lux/i.test(data.unit) ? 0 : /%|mS\/cm/i.test(data.unit) ? 2 : 1;
+		const decimalPlaces = /^MPa$/i.test(data.unit) ? 3 : /ppm|lux/i.test(data.unit) ? 0 : /%|mS\/cm/i.test(data.unit) ? 2 : 1;
 		for (let line = 0; line <= 4; line += 1) {
 			const y = margin.top + (plotHeight * line) / 4;
 			const value = high - ((high - low) * line) / 4;
@@ -247,16 +251,33 @@ function setupDashboard(root: HTMLElement): void {
 	};
 
 	const loadChart = async () => {
+		if (disposed) return;
 		let selected: [string, string];
 		try { selected = JSON.parse(metricSelect.value) as [string, string]; }
 		catch { return; }
 		const [metric, unit] = selected;
 		const day = daySelect.value;
 		if (!metric || !day) return;
+		const version = ++requestVersion;
+		pending?.abort(); pending = new AbortController();
 		setStatus(say('正在读取所选日期的数据…', 'Loading measurements for this day…'));
 		clearChart();
 		try {
-			const data = await responseJson<ChartResponse>(`/api/telemetry?day=${encodeURIComponent(day)}&metric=${encodeURIComponent(metric)}&unit=${encodeURIComponent(unit)}&groupBy=${groupBy}`);
+			const parameters = new URLSearchParams({ day, metric, unit, groupBy });
+			for (const sensor of options.sensorIds || []) parameters.append('sensor', sensor);
+			const data = await responseJson<ChartResponse>(`/api/telemetry?${parameters}`, AbortSignal.any([pending.signal, AbortSignal.timeout(10000)]));
+			if (disposed || version !== requestVersion) return;
+			if (data.metric !== metric || data.unit !== unit || (options.sensorIds?.length && data.series.some(series => !series.sensorId || !options.sensorIds!.includes(series.sensorId)))) {
+				throw new Error(say('历史服务版本或传感器范围不匹配，请管理员刷新网页服务后重试。', 'History service version or sensor scope mismatch. Ask the administrator to reload the web service.'));
+			}
+			if (options.pressureInMPa && data.metric === 'pressure' && data.unit === 'Pa') {
+				data.unit = 'MPa';
+				data.series = data.series.map(series => ({ ...series, points: series.points.map(point => ({ ...point,
+					average: point.average === null ? null : point.average / 1e6,
+					minimum: point.minimum === null ? null : point.minimum / 1e6,
+					maximum: point.maximum === null ? null : point.maximum / 1e6,
+				})) }));
+			}
 			const sync = root.querySelector<HTMLElement>('[data-sync-status]');
 			if (sync && data.generatedAt) sync.textContent = `${say('摘要更新时间', 'Summary updated')}: ${new Date(data.generatedAt).toLocaleString(isEnglish ? 'en-GB' : 'zh-CN', {timeZone:'Asia/Shanghai'})}${data.stale ? say(' · 当前日摘要未及时刷新', ' · Today’s summary is stale') : ''}`;
 			const pointCount = drawChart(data) ?? 0;
@@ -267,13 +288,17 @@ function setupDashboard(root: HTMLElement): void {
 			const sensorCount = data.series.length;
 			setStatus(say(`显示 ${sensorCount} 条测量曲线、${pointCount} 个有效数据点。`, `${sensorCount} measurement lines · ${pointCount} valid points.`));
 		} catch (error) {
+			if (disposed || version !== requestVersion) return;
 			setStatus(error instanceof Error ? error.message : say('读取失败，请稍后重试。', 'Could not load measurements. Please try again.'));
 		}
 	};
 
 	const loadMetrics = async () => {
 		try {
-			const data = await responseJson<{ metrics: Metric[] }>('/api/telemetry/metrics');
+			const data = options.metric && options.unit
+				? { metrics: [{ metric: options.metric, unit: options.unit, label: options.metric, sensor_count: options.sensorIds?.length || 1 }] }
+				: await responseJson<{ metrics: Metric[] }>('/api/telemetry/metrics');
+			if (disposed) return;
 			const metrics = data.metrics;
 			metricSelect.replaceChildren();
 			if (!metrics.length) {
@@ -292,11 +317,12 @@ function setupDashboard(root: HTMLElement): void {
 			const today = dayInChina();
 			daySelect.max = today;
 			daySelect.min = offsetDay(today, -29);
-			daySelect.value = today;
+			daySelect.value = options.day && options.day >= daySelect.min && options.day <= today ? options.day : today;
 			metricSelect.disabled = false;
 			daySelect.disabled = false;
 			await loadChart();
 		} catch (error) {
+			if (disposed) return;
 			metricSelect.disabled = true;
 			daySelect.disabled = true;
 			setStatus(error instanceof Error ? error.message : say('数据服务暂不可用。', 'The data service is unavailable.'));
@@ -313,6 +339,7 @@ function setupDashboard(root: HTMLElement): void {
 		});
 	}
 	void loadMetrics();
+	return () => { disposed = true; ++requestVersion; pending?.abort(); clearChart(); };
 }
 
-document.querySelectorAll<HTMLElement>('[data-telemetry-dashboard]').forEach(setupDashboard);
+document.querySelectorAll<HTMLElement>('[data-telemetry-dashboard]').forEach(root => setupDashboard(root));
