@@ -466,7 +466,7 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 	*, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 
-/* Private on-site controls; this link only opens the Tailscale-protected host. */
+/* Authenticated field management; this link only opens the separate HTTPS host. */
 .field-management-link {
 	display: inline-flex;
 	align-items: center;

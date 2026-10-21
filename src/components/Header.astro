@@ -46,11 +46,11 @@ const isActive = (href: string) => {
 			</nav>
 			<a
 				class="field-management-link"
-				href="https://aeroponics-node-h110.tail6677b4.ts.net:8443/"
+				href="https://control.xiqingagri.com/"
 				target="_blank"
 				rel="noopener noreferrer"
-				title={isEnglish ? 'Private live readings, historical data and maintenance; connect to Tailscale first' : '私有实时读数、历史数据与维护；请先连接 Tailscale'}
-				aria-label={isEnglish ? 'Private field data and maintenance, requires Tailscale and sign-in' : '私有现场数据与维护，需要连接 Tailscale 并登录'}
+				title={isEnglish ? 'Private live readings, historical data and maintenance; sign-in required' : '私有实时读数、历史数据与维护；需要登录'}
+				aria-label={isEnglish ? 'Private field data and maintenance, sign-in required' : '私有现场数据与维护，需要登录'}
 			>
 				<span class="field-management-link__full">{isEnglish ? 'Field management' : '现场管理'}</span>
 				<span class="field-management-link__compact" aria-hidden="true">{isEnglish ? 'Field' : '管理'}</span>

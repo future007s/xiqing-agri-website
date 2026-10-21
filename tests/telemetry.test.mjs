@@ -44,10 +44,23 @@ test('public navigation, pages and sitemap contain no data dashboard or data API
   for(const file of ['src/pages/data.astro','src/pages/en/data.astro']) {
     const source=readFileSync(file,'utf8');
     assert.equal(source.includes('TelemetryDashboard'),false);assert.ok(source.includes('noindex'));
-    assert.ok(source.includes('tail6677b4.ts.net:8443/data'));
+    assert.ok(source.includes('https://control.xiqingagri.com/data'));
+    assert.equal(source.includes('Tailscale'),false);
+    assert.equal(source.includes('tail6677b4.ts.net'),false);
   }
   const sitemap=readFileSync('src/pages/sitemap.xml.ts','utf8');
   assert.equal(sitemap.includes("'/data'"),false);assert.equal(sitemap.includes("'/en/data'"),false);
+});
+test('field management links use the HTTPS domain while preserving sign-in and locale',() => {
+  const header=readFileSync('src/components/Header.astro','utf8');
+  assert.ok(header.includes('href="https://control.xiqingagri.com/"'));
+  assert.ok(header.includes('需要登录'));assert.ok(header.includes('sign-in required'));
+  assert.ok(header.includes('rel="noopener noreferrer"'));
+  assert.equal(header.includes('Tailscale'),false);
+  assert.equal(header.includes('tail6677b4.ts.net'),false);
+  assert.equal(header.includes('fd7a:'),false);
+  assert.ok(readFileSync('src/pages/data.astro','utf8').includes('href="https://control.xiqingagri.com/data"'));
+  assert.ok(readFileSync('src/pages/en/data.astro','utf8').includes('href="https://control.xiqingagri.com/data?lang=en"'));
 });
 test('legacy normalization stays available for historical schema review without an upload endpoint',() => {
   assert.equal(normalizeSample({bucketStart:'2026-09-23T00:11:00Z'}),null);
