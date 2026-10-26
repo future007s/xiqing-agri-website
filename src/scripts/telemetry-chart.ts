@@ -222,10 +222,8 @@ export function setupDashboard(root: HTMLElement, options: DashboardOptions = {}
 			for (const { point, average, x, y } of validPoints) {
 				const local = new Date(Date.parse(point.at) + 8 * 60 * 60 * 1000);
 				const time = `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
-				const formatValue = (value: number | null) => typeof value === 'number' && Number.isFinite(value) ? value.toFixed(decimalPlaces) : '—';
 				const valueText = `${average.toFixed(decimalPlaces)} ${data.unit}`;
-				const rangeText = `${formatValue(point.minimum)}–${formatValue(point.maximum)} ${data.unit}`;
-				const details = `${time} · ${valueText} · ${say('10 分钟范围', '10-minute range')} ${rangeText} · ${say('有效样本', 'valid samples')} ${point.validCount}/${point.totalCount}`;
+				const details = `${time} · ${valueText}`;
 				const hitArea = createSvg('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: '3', tabindex: '0', role: 'graphics-symbol', class: 'telemetry-chart__point-hit' }) as SVGCircleElement;
 				hitArea.setAttribute('aria-label', `${series.label}: ${details}`);
 				hitArea.setAttribute('aria-describedby', tooltip.id);
