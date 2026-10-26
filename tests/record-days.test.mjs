@@ -1,6 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {adjacentDates, dateIndex, isDay, parseRecordContract, readDay, readIndex} from '../src/lib/record-days.ts';
+import {availableRecordDate, calendarArrowDate, monthDays, shiftMonth} from '../src/lib/record-calendar.ts';
+
+test('calendar enables exact indexed days, including gaps inside date bounds',()=>{
+  const dates=['2026-10-24','2026-10-26'];
+  const cells=monthDays('2026-10',dates);
+  assert.deepEqual(cells.filter(cell=>cell.enabled).map(cell=>cell.date),dates);
+  assert.equal(cells.find(cell=>cell.date==='2026-10-25').enabled,false);
+  assert.equal(cells.find(cell=>cell.date==='2026-10-27').enabled,false);
+  assert.equal(monthDays('2026-11',dates).some(cell=>cell.enabled),false);
+});
+test('keyboard skips disabled gaps and cannot select unavailable future dates',()=>{
+  const dates=['2026-10-24','2026-10-26','2026-11-02'];
+  assert.equal(calendarArrowDate(dates,'2026-10-24','ArrowRight'),'2026-10-26');
+  assert.equal(calendarArrowDate(dates,'2026-10-26','ArrowLeft'),'2026-10-24');
+  assert.equal(calendarArrowDate(dates,'2026-10-25','ArrowRight'),null);
+  assert.equal(calendarArrowDate(dates,'2026-11-02','ArrowRight'),null);
+  assert.equal(shiftMonth('2026-12',1),'2027-01');
+  assert.equal(shiftMonth('2027-01',-1),'2026-12');
+});
+test('unsupported URL dates resolve to a real indexed day; empty index stays empty',()=>{
+  const dates=['2026-10-24','2026-10-26'];
+  assert.deepEqual(availableRecordDate(dates,'2026-10-25'),{date:'2026-10-26',unavailable:true});
+  assert.deepEqual(availableRecordDate(dates,'2099-12-31'),{date:'2026-10-26',unavailable:true});
+  assert.deepEqual(availableRecordDate(dates,'not-a-date'),{date:'2026-10-26',unavailable:true});
+  assert.deepEqual(availableRecordDate(dates,'2026-10-24'),{date:'2026-10-24',unavailable:false});
+  assert.deepEqual(availableRecordDate([],null),{date:null,unavailable:false});
+});
 
 const id = 'DAY-TEST';
 const day = date => ({schema_version:1, experiment_id:id, date, batches:[], environment:[]});

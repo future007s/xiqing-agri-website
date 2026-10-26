@@ -4,7 +4,7 @@ import MetricCard from '../../components/MetricCard.astro';
 import RecordDatePicker from '../../components/RecordDatePicker.astro';
 import { parseRecordContract } from '../../lib/record-days';
 import ExperimentLayout from '../../layouts/ExperimentLayout.astro';
-import { displayValue, statusLabels } from '../../lib/experiments';
+import { displayValue, formatDate, statusLabels } from '../../lib/experiments';
 
 export async function getStaticPaths() {
 	const experiments = await getCollection('experiments');
@@ -30,10 +30,13 @@ const publicObservations = data.observations.filter((item) => item.reviewStatus 
 const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'confirmed');
 ---
 
-<ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description} showGuidance={!syncedRecord}>
-	<Fragment slot="record-picker">{dayContract && <RecordDatePicker experimentId={data.id} slug={experiment.id} />}</Fragment>
-	<section class="record-data section--dark" aria-labelledby="data-title">
+<ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description} showGuidance={!syncedRecord} compact={Boolean(dayContract)}>
+	<section class:list={["record-data", "section--dark", {"record-data--compact": Boolean(dayContract)}]} aria-labelledby="data-title">
 		<div class="shell">
+            {dayContract && <header class="record-summary-header">
+                <div><p class="eyebrow">{data.id} · {data.tower}</p><h1>{data.title}</h1><p class="record-summary-start">开始日期 {formatDate(data.startDate)}</p></div>
+                <RecordDatePicker experimentId={data.id} slug={experiment.id} />
+            </header>}
 			<div class="section-heading section-heading--light section-heading--row">
 				<div><p class="eyebrow">MEASUREMENTS</p><h2 id="data-title">数据摘要</h2></div>
 				{!syncedRecord && <p class="data-note">未测 ≠ 0 · 空值统一显示“待实测”</p>}
@@ -52,7 +55,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 			{data.productionBatchId && <p class="experiment-trace-link"><span>关联生产批次</span><a href={`/trace/${data.productionBatchId.toLowerCase()}`}>{data.productionBatchId} ↗</a></p>}
 		</div>
 	</section>
-	<section class="record-body shell">
+	<section class:list={["record-body", "shell", {"record-body--daily": Boolean(dayContract)}]}>
 		{dayContract ? <div class="prose record-day-content" data-record-day-content aria-live="polite"><p>正在读取当天记录…</p></div> : <article class="prose"><Content /></article>}
 		{!syncedRecord && <aside class="record-aside" aria-label="数据口径">
 			<p class="eyebrow">DATA RULES</p>
