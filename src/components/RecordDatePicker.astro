@@ -24,31 +24,31 @@ const {experimentId, slug} = Astro.props;
   document.querySelectorAll<HTMLElement>('[data-record-browser]').forEach(initRecordBrowser);
 </script>
 <style is:global>
-  .record-date-picker { padding:0; }
-  .record-date-picker.is-floating { position:fixed; top:calc(env(safe-area-inset-top, 0px) + .6rem); right:max(.75rem,calc((100vw - 1200px)/2)); z-index:30; width:max-content; max-width:calc(100vw - 1.5rem); padding:.35rem .45rem; border:1px solid var(--line); background:var(--paper); color:var(--ink); box-shadow:0 4px 18px rgb(0 0 0 / .18); }
+  .record-date-picker { --record-control-bg:#f2f0e9; --record-control-ink:#171915; --record-control-line:#61665b; --record-control-muted:#696b62; padding:0; }
+  .record-date-picker.is-floating { position:fixed; top:calc(env(safe-area-inset-top, 0px) + .6rem); right:max(.75rem,calc((100vw - 1200px)/2)); z-index:30; width:max-content; max-width:calc(100vw - 1.5rem); padding:.35rem .45rem; border:1px solid var(--record-control-line); background:var(--record-control-bg); color:var(--record-control-ink); box-shadow:0 4px 18px rgb(0 0 0 / .18); }
   .record-date-picker__form { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; }
   .record-date-picker.is-floating .record-date-picker__form { flex-wrap:nowrap; gap:.25rem; }
   .record-date-picker__form > span { font-size:.8rem; margin-right:.3rem; }
-  .record-date-picker__form button { min-height:44px; min-width:44px; border:1px solid #61665b; background:var(--paper); color:var(--ink); padding:.5rem .65rem; font:inherit; cursor:pointer; }
-  .record-date-picker__form button:disabled { opacity:.4; cursor:default; }
+  .record-date-picker__form button { min-height:44px; min-width:44px; border:1px solid var(--record-control-line); background:var(--record-control-bg); color:var(--record-control-ink); padding:.5rem .65rem; font:inherit; cursor:pointer; }
+  .record-date-picker__form button:disabled { color:var(--record-control-muted); cursor:default; }
   .record-date-picker button:focus-visible { outline:2px solid var(--signal); outline-offset:2px; }
   .record-date-picker [role=status] { margin:.35rem 0 0; font-size:.75rem; }
   .record-date-picker.is-floating .record-date-picker__form > span,
   .record-date-picker.is-floating [role=status] { display:none; }
-  .record-calendar { width:min(24rem,calc(100% - 2rem)); max-height:calc(100dvh - 2rem); overflow:auto; margin:auto; padding:1rem; border:1px solid var(--line); background:var(--paper); color:var(--ink); }
+  .record-calendar { width:min(24rem,calc(100% - 2rem)); max-height:calc(100dvh - 2rem); overflow:auto; margin:auto; padding:1rem; border:1px solid var(--record-control-line); background:var(--record-control-bg); color:var(--record-control-ink); }
   .record-calendar::backdrop { background:rgb(0 0 0 / .4); }
   .record-calendar__top,.record-calendar__month { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
   .record-calendar__top h2 { font-size:1rem; margin:0; }
   .record-calendar__month h3 { font-size:1rem; margin:0; }
   .record-calendar button { min-width:40px; min-height:44px; padding:.3rem; color:inherit; background:transparent; border:1px solid transparent; font:inherit; cursor:pointer; }
-  .record-calendar button:disabled { color:#9a9b96; background:rgb(120 120 120 / .07); cursor:default; }
+  .record-calendar button:disabled { color:var(--record-control-muted); background:rgb(120 120 120 / .07); cursor:default; }
   .record-calendar table { width:100%; border-collapse:separate; border-spacing:2px; table-layout:fixed; margin-top:.5rem; }
   .record-calendar th { font-size:.8rem; font-weight:400; padding-block:.25rem; }
   .record-calendar td { padding:0; text-align:center; }
   .record-calendar td button { width:100%; min-width:0; }
   .record-calendar td button:not(:disabled) { background:#dbe3c5; color:#202719; border-color:#879865; }
   .record-calendar td button[aria-current=date] { background:#435530; color:white; border-color:#435530; }
-  .record-calendar__hint { font-size:.75rem; margin:.5rem 0 0; color:#73756d; }
+  .record-calendar__hint { font-size:.75rem; margin:.5rem 0 0; color:var(--record-control-muted); }
   .record-data.record-data--compact { padding-block:1.5rem; }
   .record-data.record-data--compact .metric-grid--record { grid-template-columns:repeat(4,minmax(0,1fr)); }
   .record-body.record-body--daily { padding-block:2rem; }
@@ -73,6 +73,9 @@ const {experimentId, slug} = Astro.props;
   .record-observation figure { margin:1rem 0; }
   .record-observation img { display:block; width:100%; height:auto; }
   .record-day-batch-context { margin-bottom:1.5rem; }
+  @media(prefers-color-scheme:dark) {
+    .record-date-picker { --record-control-bg:#172129; --record-control-ink:#eaf0f4; --record-control-line:#72838d; --record-control-muted:#a0adb5; }
+  }
   @media(max-width:480px) {
     .record-summary-header { gap:.8rem; }
     .record-data.record-data--compact .metric-grid--record { grid-template-columns:repeat(2,minmax(0,1fr)); }
