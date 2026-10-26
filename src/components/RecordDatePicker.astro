@@ -1,0 +1,46 @@
+---
+interface Props { experimentId: string; slug: string }
+const {experimentId, slug} = Astro.props;
+---
+<section class="record-date-picker shell" data-record-browser data-experiment-id={experimentId} data-record-base={`/record-days/${slug}`} aria-label="按日期查看记录">
+  <form class="record-date-picker__form">
+    <label for="record-date">记录日期</label>
+    <button type="button" data-record-previous aria-label="较早一天的记录" disabled>←</button>
+    <input id="record-date" name="date" type="date" required aria-label="记录日期" disabled />
+    <button type="button" data-record-next aria-label="较新一天的记录" disabled>→</button>
+    <button type="submit" data-record-submit disabled>查看</button>
+  </form>
+  <p role="status" data-record-status>正在读取日期…</p>
+  <noscript><p>请启用 JavaScript 选择日期并读取当天记录。</p></noscript>
+</section>
+<script>
+  import { initRecordBrowser } from '../lib/record-day-browser';
+  document.querySelectorAll<HTMLElement>('[data-record-browser]').forEach(initRecordBrowser);
+</script>
+<style is:global>
+  .record-date-picker { padding-block: 1.25rem; }
+  .record-date-picker__form { display:flex; align-items:center; flex-wrap:wrap; gap:.6rem; }
+  .record-date-picker__form label { font-weight:600; margin-right:.4rem; }
+  .record-date-picker__form button, .record-date-picker__form input { min-height:44px; border:1px solid var(--line); background:var(--paper); color:var(--ink); padding:.55rem .8rem; font:inherit; border-radius:0; }
+  .record-date-picker__form button { cursor:pointer; min-width:44px; }
+  .record-date-picker__form button:disabled { opacity:.4; cursor:default; }
+  .record-date-picker__form button:focus-visible, .record-date-picker__form input:focus-visible { outline:2px solid var(--signal-dark); outline-offset:3px; }
+  .record-date-picker [role=status] { margin:.6rem 0 0; font-size:.85rem; }
+  .record-day-content { min-height:12rem; }
+  .record-day-content h2 { margin-top:0; }
+  .record-day-item { margin-bottom:2.5rem; }
+  .record-day-item h3 { margin-top:0; }
+  .record-day-environment { display:flex; flex-wrap:wrap; gap:1rem 2rem; margin:0; }
+  .record-day-environment div { display:grid; gap:.3rem; }
+  .record-day-environment dt { font-size:.9rem; }
+  .record-day-environment dd { margin:0; font-size:1.5rem; font-weight:600; }
+  .record-observation { margin-block:1.8rem; }
+  .record-observation figure { margin:1rem 0; }
+  .record-observation img { display:block; width:100%; height:auto; }
+  .record-day-batch-context { margin-bottom:1.5rem; }
+  @media(max-width:480px) {
+    .record-date-picker__form label { width:100%; }
+    .record-date-picker__form input { flex:1; min-width:0; width:9.5rem; }
+    .record-date-picker__form { gap:.4rem; }
+  }
+</style>

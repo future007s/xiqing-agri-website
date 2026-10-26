@@ -1,6 +1,8 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import MetricCard from '../../components/MetricCard.astro';
+import RecordDatePicker from '../../components/RecordDatePicker.astro';
+import { parseRecordContract } from '../../lib/record-days';
 import ExperimentLayout from '../../layouts/ExperimentLayout.astro';
 import { displayValue, statusLabels } from '../../lib/experiments';
 
@@ -15,7 +17,8 @@ interface Props {
 
 const { experiment } = Astro.props;
 const { data } = experiment;
-const syncedRecord = experiment.body?.includes('<!-- xiqing-record-sync:v1 BEGIN -->') ?? false;
+const dayContract = parseRecordContract(experiment.body, data.id);
+const syncedRecord = Boolean(dayContract) || (experiment.body?.includes('<!-- xiqing-record-sync:v1 BEGIN -->') ?? false);
 const { Content } = await render(experiment);
 const description = `${data.id}：${data.title}。公开记录实验设计、状态与真实测量结果。`;
 const eventStatusLabels = { planned: '计划', completed: '已完成', failed: '失败', paused: '暂停' };
@@ -28,6 +31,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 ---
 
 <ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description} showGuidance={!syncedRecord}>
+	<Fragment slot="record-picker">{dayContract && <RecordDatePicker experimentId={data.id} slug={experiment.id} />}</Fragment>
 	<section class="record-data section--dark" aria-labelledby="data-title">
 		<div class="shell">
 			<div class="section-heading section-heading--light section-heading--row">
@@ -49,7 +53,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 		</div>
 	</section>
 	<section class="record-body shell">
-		<article class="prose"><Content /></article>
+		{dayContract ? <div class="prose record-day-content" data-record-day-content aria-live="polite"><p>正在读取当天记录…</p></div> : <article class="prose"><Content /></article>}
 		{!syncedRecord && <aside class="record-aside" aria-label="数据口径">
 			<p class="eyebrow">DATA RULES</p>
 			<ul><li>事实 &gt; 宣传</li><li>实测 &gt; 推测</li><li>未知 ≠ 0</li><li>设计值 ≠ 实测值</li><li>失败数据不删除</li></ul>
@@ -145,7 +149,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 	</section>
 </ExperimentLayout>
 
-<script is:inline define:vars={{ experimentId: data.id }}>
+{!dayContract && <script is:inline define:vars={{ experimentId: data.id }}>
 	const mediaShell = document.querySelector('[data-media-shell]');
 	const mediaGrid = document.querySelector('[data-media-grid]');
 	const mediaEmpty = document.querySelector('[data-media-empty]');
@@ -210,4 +214,4 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 	};
 
 	void loadDynamicMedia();
-</script>
+</script>}

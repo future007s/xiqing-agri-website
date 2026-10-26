@@ -20,6 +20,7 @@ const alternatePath = isEnglish ? `/experiments/${id.toLowerCase()}` : `/en/expe
 
 <BaseLayout title={`${id} ${title} | ${isEnglish ? 'XIQING AGRI' : '曦清农业'}`} description={description} type="article" locale={locale} alternatePath={alternatePath}>
 	<main>
+		<slot name="record-picker" />
 		<header class="record-hero">
 			<div class="shell record-hero__inner">
 				<p class="eyebrow">EXPERIMENT RECORD / {tower}</p>
