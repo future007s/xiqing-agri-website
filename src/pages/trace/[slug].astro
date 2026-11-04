@@ -1,9 +1,10 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { isPublicTraceBatch } from '../../lib/public-records';
 import TraceBatchLayout from '../../layouts/TraceBatchLayout.astro';
 
 export async function getStaticPaths() {
-	const batches = await getCollection('traceBatches');
+	const batches = await getCollection('traceBatches', isPublicTraceBatch);
 	return batches.map((batch) => ({ params: { slug: batch.id }, props: { batch } }));
 }
 

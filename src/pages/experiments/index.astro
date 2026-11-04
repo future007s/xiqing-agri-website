@@ -1,10 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
+import { isPublicExperiment } from '../../lib/public-records';
 import ExperimentCard from '../../components/ExperimentCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { sortExperimentsNewestFirst } from '../../lib/experiments';
 
-const experiments = (await getCollection('experiments')).sort(sortExperimentsNewestFirst);
+const experiments = (await getCollection('experiments', isPublicExperiment)).sort(sortExperimentsNewestFirst);
 ---
 
 <BaseLayout
@@ -16,7 +17,7 @@ const experiments = (await getCollection('experiments')).sort(sortExperimentsNew
 		<header class="page-hero shell">
 			<p class="eyebrow">EXPERIMENT DATABASE</p>
 			<div class="page-hero__heading"><h1>实验记录</h1><p>{String(experiments.length).padStart(2, '0')} RECORDS</p></div>
-			<p class="page-hero__intro">每条记录由 Markdown 生成。设计值、实测值与待验证假设分开呈现；未测量的数据不会用 0 代替。</p>
+			<p class="page-hero__intro">从育苗到移栽，按日期查看种植观察、操作和现场照片。</p>
 		</header>
 		<section class="section section--tint" aria-label="全部实验">
 			<div class="shell experiment-list">

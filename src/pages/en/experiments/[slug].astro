@@ -1,11 +1,12 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { isPublicExperiment } from '../../../lib/public-records';
 import MetricCard from '../../../components/MetricCard.astro';
 import ExperimentLayout from '../../../layouts/ExperimentLayout.astro';
 import { displayValue, statusLabelsEn } from '../../../lib/experiments';
 
 export async function getStaticPaths() {
-	const experiments = await getCollection('experimentsEn');
+	const experiments = await getCollection('experimentsEn', isPublicExperiment);
 	return experiments.map((experiment) => ({ params: { slug: experiment.id }, props: { experiment } }));
 }
 

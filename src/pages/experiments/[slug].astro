@@ -1,5 +1,6 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { isPublicExperiment, isPublicTraceBatch, productionBatchesForExperiment } from '../../lib/public-records';
 import MetricCard from '../../components/MetricCard.astro';
 import RecordDatePicker from '../../components/RecordDatePicker.astro';
 import { parseRecordContract } from '../../lib/record-days';
@@ -7,7 +8,7 @@ import ExperimentLayout from '../../layouts/ExperimentLayout.astro';
 import { displayValue, formatDate, statusLabels } from '../../lib/experiments';
 
 export async function getStaticPaths() {
-	const experiments = await getCollection('experiments');
+	const experiments = await getCollection('experiments', isPublicExperiment);
 	return experiments.map((experiment) => ({ params: { slug: experiment.id }, props: { experiment } }));
 }
 
@@ -17,6 +18,7 @@ interface Props {
 
 const { experiment } = Astro.props;
 const { data } = experiment;
+const linkedProductionBatches = productionBatchesForExperiment(experiment, await getCollection('traceBatches', isPublicTraceBatch));
 const dayContract = parseRecordContract(experiment.body, data.id);
 const syncedRecord = Boolean(dayContract) || (experiment.body?.includes('<!-- xiqing-record-sync:v1 BEGIN -->') ?? false);
 const { Content } = await render(experiment);
@@ -52,7 +54,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 				{(!syncedRecord || data.waterL != null) && <MetricCard label="用水量" value={displayValue(data.waterL, 'L')} kind="实测值" pending={data.waterL == null} />}
 				{(!syncedRecord || data.costCny != null) && <MetricCard label="成本" value={displayValue(data.costCny, 'CNY')} kind="实测值" pending={data.costCny == null} />}
 			</div>
-			{data.productionBatchId && <p class="experiment-trace-link"><span>关联生产批次</span><a href={`/trace/${data.productionBatchId.toLowerCase()}`}>{data.productionBatchId} ↗</a></p>}
+			{linkedProductionBatches.map(batch => <p class="experiment-trace-link"><span>关联生产批次</span><a href={`/trace/${batch.id}`}>{batch.data.displayId} ↗</a></p>)}
 		</div>
 	</section>
 	<section class:list={["record-body", "shell", {"record-body--daily": Boolean(dayContract)}]}>

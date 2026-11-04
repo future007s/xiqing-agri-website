@@ -27,7 +27,7 @@ const labels = isEnglish
 			<div><dt>{labels.crop}</dt><dd>{data.crop.name}</dd></div>
 			<div><dt>{labels.farm}</dt><dd>{data.farm.name}</dd></div>
 			<div><dt>{labels.started}</dt><dd>{formatTraceDate(data.startedAt, locale)}</dd></div>
-			<div><dt>{labels.harvest}</dt><dd>{formatTraceDate(data.plannedHarvestAt, locale)}</dd></div>
+			{data.plannedHarvestAt ? <div><dt>{labels.harvest}</dt><dd>{formatTraceDate(data.plannedHarvestAt, locale)}</dd></div> : data.declaredMemberCount != null && <div><dt>{isEnglish ? 'Transplanted' : '移栽数量'}</dt><dd>{data.declaredMemberCount}{isEnglish ? ' plants' : ' 株'}</dd></div>}
 		</dl>
 		<span class="trace-card__arrow" aria-hidden="true">↗</span>
 	</a>

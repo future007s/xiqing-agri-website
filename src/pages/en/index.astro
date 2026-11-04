@@ -1,13 +1,18 @@
 ---
 import { getCollection } from 'astro:content';
+import { currentGrowingRecord, isPublicExperiment } from '../../lib/public-records';
 import ExperimentCard from '../../components/ExperimentCard.astro';
 import MetricCard from '../../components/MetricCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { displayValue, sortExperimentsNewestFirst, statusLabelsEn } from '../../lib/experiments';
 
-const experiments = (await getCollection('experimentsEn')).sort(sortExperimentsNewestFirst);
+const translatedExperiments = (await getCollection('experimentsEn', isPublicExperiment)).sort(sortExperimentsNewestFirst);
+const experiments = translatedExperiments.length ? translatedExperiments : (await getCollection('experiments', isPublicExperiment)).sort(sortExperimentsNewestFirst);
+const experimentPrefix = translatedExperiments.length ? '/en' : '';
+
 const featuredExperiment = experiments.find(({ data }) => data.featured) ?? experiments[0];
 const latestExperiments = experiments.slice(0, 3);
+const growing = featuredExperiment ? currentGrowingRecord(featuredExperiment) : undefined;
 const description =
 	'XIQING AGRI openly documents aeroponics, natural-light cultivation, sensors and automation through real costs, energy use, yields, failures and engineering iterations.';
 ---
@@ -31,7 +36,7 @@ const description =
 						XIQING AGRI is building a low-cost automated growing system from the ground up.<br />
 						We publish the design, cost, energy use, yield, failures and every iteration.
 					</p>
-					<a class="button" href="/en/experiments/t01-001">
+					<a class="button" href={featuredExperiment ? `${experimentPrefix}/experiments/${featuredExperiment.id}` : '/en/experiments'}>
 						View the current experiment <span aria-hidden="true">↗</span>
 					</a>
 				</div>
@@ -56,7 +61,7 @@ const description =
 							<h3>{featuredExperiment.data.title}</h3>
 						</div>
 						<p>
-							This page currently shows confirmed design parameters only. Measured results will be added as they are produced, and failed trials will remain public.
+							{growing?.summary}
 						</p>
 					</div>
 
@@ -64,10 +69,10 @@ const description =
 						<MetricCard label="Tower height" value={displayValue(featuredExperiment.data.towerHeightM, 'm', 'Pending')} kind="DESIGN" />
 						<MetricCard label="Plant sites" value={displayValue(featuredExperiment.data.designPlants, '', 'Pending')} kind="DESIGN" />
 						<MetricCard label="Status" value={statusLabelsEn[featuredExperiment.data.status]} kind="CURRENT" />
-						<MetricCard label="Measured data" value="Pending" kind="MEASURED" pending />
+						{growing?.phase && <MetricCard label="Stage" value={growing.phase} kind="CURRENT" />}
 					</div>
 
-					<a class="text-link text-link--light" href={`/en/experiments/${featuredExperiment.id}`}>
+					<a class="text-link text-link--light" href={`${experimentPrefix}/experiments/${featuredExperiment.id}`}>
 						View the full experiment record <span aria-hidden="true">→</span>
 					</a>
 				</div>
@@ -94,7 +99,7 @@ const description =
 					<a class="text-link" href="/en/experiments">View all records <span aria-hidden="true">→</span></a>
 				</div>
 				<div class="experiment-list">
-					{latestExperiments.map((experiment) => <ExperimentCard experiment={experiment} locale="en" />)}
+					{latestExperiments.map((experiment) => <ExperimentCard experiment={experiment} locale={translatedExperiments.length ? "en" : "zh"} />)}
 				</div>
 			</div>
 		</section>

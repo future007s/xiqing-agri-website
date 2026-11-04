@@ -1,5 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { isPublicExperiment } from '../lib/public-records';
 import { formatDate, statusLabels, statusLabelsEn, type ExperimentStatus } from '../lib/experiments';
 
 interface Props {
@@ -16,7 +18,9 @@ interface Props {
 
 const { id, title, tower, status, startDate, description, locale = 'zh', showGuidance = true, compact = false } = Astro.props;
 const isEnglish = locale === 'en';
-const alternatePath = isEnglish ? `/experiments/${id.toLowerCase()}` : `/en/experiments/${id.toLowerCase()}`;
+const alternates = await getCollection(isEnglish ? 'experiments' : 'experimentsEn', isPublicExperiment);
+const alternate = alternates.find(entry => entry.data.id === id);
+const alternatePath = alternate ? `${isEnglish ? '' : '/en'}/experiments/${alternate.id}` : `${isEnglish ? '' : '/en'}/experiments`;
 ---
 
 <BaseLayout title={`${id} ${title} | ${isEnglish ? 'XIQING AGRI' : '曦清农业'}`} description={description} type="article" locale={locale} alternatePath={alternatePath}>

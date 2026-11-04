@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { displayValue, formatDate, statusLabels, statusLabelsEn } from '../lib/experiments';
+import { currentGrowingRecord } from '../lib/public-records';
 
 interface Props {
 	experiment: CollectionEntry<'experiments'> | CollectionEntry<'experimentsEn'>;
@@ -10,6 +11,7 @@ interface Props {
 const { experiment, locale = 'zh' } = Astro.props;
 const { data } = experiment;
 const isEnglish = locale === 'en';
+const growing = currentGrowingRecord(experiment);
 const href = `${isEnglish ? '/en' : ''}/experiments/${experiment.id}`;
 const labels = isEnglish
 	? { date: 'Date', tower: 'Tower', crop: 'Crop', yield: 'Yield', view: 'View experiment', pending: 'Pending' }
@@ -27,7 +29,7 @@ const labels = isEnglish
 			<div><dt>{labels.date}</dt><dd>{formatDate(data.startDate)}</dd></div>
 			<div><dt>{labels.tower}</dt><dd>{data.tower}</dd></div>
 			<div><dt>{labels.crop}</dt><dd>{data.plant}</dd></div>
-			<div><dt>{labels.yield}</dt><dd>{displayValue(data.yieldKg, 'kg', labels.pending)}</dd></div>
+			{data.yieldKg != null ? <div><dt>{labels.yield}</dt><dd>{displayValue(data.yieldKg, 'kg', labels.pending)}</dd></div> : growing.phase && <div><dt>{isEnglish ? 'Stage' : '阶段'}</dt><dd>{growing.phase}</dd></div>}
 		</dl>
 		<span class="experiment-card__arrow" aria-hidden="true">↗</span>
 	</a>

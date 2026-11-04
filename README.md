@@ -22,13 +22,15 @@ npm run build
 - `src/pages/`、`src/components/`：中英文页面和组件。
 - `src/content/experiments/` 与 `src/content/experiments-en/`：经审核的网站实验发布副本。
 - `src/content/trace-batches/` 与 `src/content/trace-batches-en/`：静态追溯公开副本；生产批次不是实验编号。
-- `src/content.config.ts`：网站内容字段校验；实际示例见 `t01-001.md`。
+- `src/content.config.ts`：网站内容字段校验；真实实验见 `nursery-20261024-01.md`。
 - `functions/api/`：媒体与公开数据接口；`migrations/`：D1 网站侧迁移。
 - `workers/telemetry-retention/`：网站侧公开摘要保留任务。
 - [现场运行与维护入口](docs/field-management.md)：官网链接到本地私有页面，实时读数和控制服务不经过官网。
 - `ops/telemetry-publisher/README.md`：现场发布器已迁至系统仓库的说明，不再存两份源码。
 
 实验原始记录、未审核观察、照片/视频原件及运行日志不应直接提交进网站仓库。媒体对象保存在 R2，D1 保存索引和审核后的公开读模型；官网只展示允许公开的内容。详见[实验发布入口](docs/experiment-record-template.md)、[媒体边界](docs/media-storage-convention.md)和[遥测边界](docs/telemetry-data-design.md)。
+
+`src/lib/public-records.ts` 集中管理公开记录入口。原 `T01-001` 实验及其八月生产批次模板保留在源码中，不生成公开详情路由，也不进入首页、列表和站点地图。真实生产批次通过 `sourceExperimentId` 关联实验，页面据此生成双向链接；静态批次建档与现场数据库写入分别执行。
 
 ## 发布前核对
 

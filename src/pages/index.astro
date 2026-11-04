@@ -1,13 +1,16 @@
 ---
 import { getCollection } from 'astro:content';
+import { currentGrowingRecord, isPublicExperiment, isPublicTraceBatch, productionBatchesForExperiment } from '../lib/public-records';
 import ExperimentCard from '../components/ExperimentCard.astro';
 import MetricCard from '../components/MetricCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { displayValue, sortExperimentsNewestFirst, statusLabels } from '../lib/experiments';
+import { formatDate, sortExperimentsNewestFirst, statusLabels } from '../lib/experiments';
 
-const experiments = (await getCollection('experiments')).sort(sortExperimentsNewestFirst);
+const experiments = (await getCollection('experiments', isPublicExperiment)).sort(sortExperimentsNewestFirst);
 const featuredExperiment = experiments.find(({ data }) => data.featured) ?? experiments[0];
 const latestExperiments = experiments.slice(0, 3);
+const growing = featuredExperiment ? currentGrowingRecord(featuredExperiment) : undefined;
+const currentBatch = featuredExperiment ? productionBatchesForExperiment(featuredExperiment, await getCollection('traceBatches', isPublicTraceBatch))[0] : undefined;
 
 const description =
 	'曦清农业公开记录气雾培、自然光、传感器与自动控制系统的真实成本、能耗、产量、故障和工程迭代。';
@@ -32,7 +35,7 @@ const description =
 						曦清正在从零搭建低成本自动化农业系统。<br />
 						我们公开记录设计、成本、能耗、产量、故障和每一次迭代。
 					</p>
-					<a class="button" href="/experiments/t01-001">
+					<a class="button" href={featuredExperiment ? `/experiments/${featuredExperiment.id}` : '/experiments'}>
 						查看当前实验 <span aria-hidden="true">↗</span>
 					</a>
 				</div>
@@ -57,20 +60,21 @@ const description =
 							<h3>{featuredExperiment.data.title}</h3>
 						</div>
 						<p>
-							当前页面仅展示已确认的设计参数。实验结果产生后，实测值会逐项补充，失败记录同样保留。
+							{growing?.summary}
 						</p>
 					</div>
 
 					<div class="metric-grid">
-						<MetricCard label="塔高" value={displayValue(featuredExperiment.data.towerHeightM, 'm')} kind="设计值" />
-						<MetricCard label="设计株数" value={displayValue(featuredExperiment.data.designPlants)} kind="设计值" />
-						<MetricCard label="状态" value={statusLabels[featuredExperiment.data.status]} kind="当前状态" />
-						<MetricCard label="实验数据" value="待实测" kind="实测值" pending />
+						<MetricCard label="作物" value={featuredExperiment.data.plant} kind="当前种植" />
+						<MetricCard label="阶段" value={growing?.phase || statusLabels[featuredExperiment.data.status]} kind="当前状态" />
+						{currentBatch?.data.declaredMemberCount != null && <MetricCard label="移栽数量" value={`${currentBatch.data.declaredMemberCount} 株`} kind={formatDate(currentBatch.data.startedAt)} />}
+						{growing?.date && <MetricCard label="最近记录" value={formatDate(growing.date)} kind="记录日期" />}
 					</div>
 
-					<a class="text-link text-link--light" href={`/experiments/${featuredExperiment.id}`}>
+					<div class="current-record-links"><a class="text-link text-link--light" href={`/experiments/${featuredExperiment.id}`}>
 						查看完整实验记录 <span aria-hidden="true">→</span>
 					</a>
+					{currentBatch && <a class="text-link text-link--light" href={`/trace/${currentBatch.id}`}>生产批次 {currentBatch.data.displayId} <span aria-hidden="true">→</span></a>}</div>
 				</div>
 			</section>
 		)}
@@ -101,3 +105,7 @@ const description =
 		</section>
 	</main>
 </BaseLayout>
+
+<style>
+	.current-record-links { display:flex; flex-wrap:wrap; gap:1rem 2rem; }
+</style>

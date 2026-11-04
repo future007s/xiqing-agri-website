@@ -1,12 +1,13 @@
 import { getCollection } from 'astro:content';
+import { isPublicExperiment, isPublicTraceBatch } from '../lib/public-records';
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ site }) => {
 	const base = site ?? new URL('https://xiqingagri.com');
-	const experiments = await getCollection('experiments');
-	const experimentsEn = await getCollection('experimentsEn');
-	const traceBatches = await getCollection('traceBatches');
-	const traceBatchesEn = await getCollection('traceBatchesEn');
+	const experiments = await getCollection('experiments', isPublicExperiment);
+	const experimentsEn = await getCollection('experimentsEn', isPublicExperiment);
+	const traceBatches = await getCollection('traceBatches', isPublicTraceBatch);
+	const traceBatchesEn = await getCollection('traceBatchesEn', isPublicTraceBatch);
 	const paths = [
 		'/',
 		'/experiments',

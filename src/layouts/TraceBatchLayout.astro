@@ -1,5 +1,6 @@
 ---
-import type { CollectionEntry } from 'astro:content';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { isPublicTraceBatch } from '../lib/public-records';
 import BaseLayout from './BaseLayout.astro';
 import {
 	formatTraceDate,
@@ -18,7 +19,8 @@ const { batch, locale = 'zh' } = Astro.props;
 const { data } = batch;
 const isEnglish = locale === 'en';
 const prefix = isEnglish ? '/en' : '';
-const alternatePath = isEnglish ? `/trace/${batch.id}` : `/en/trace/${batch.id}`;
+const alternate = (await getCollection(isEnglish ? 'traceBatches' : 'traceBatchesEn', isPublicTraceBatch)).find(entry => entry.data.id === data.id);
+const alternatePath = alternate ? `${isEnglish ? '' : '/en'}/trace/${alternate.id}` : `${isEnglish ? '' : '/en'}/trace`;
 const statusLabel = isEnglish ? traceStatusLabelsEn[data.status] : traceStatusLabels[data.status];
 const resolutions = isEnglish ? resolutionLabelsEn : resolutionLabels;
 const title = isEnglish
@@ -94,7 +96,8 @@ const labels = isEnglish ? {
 	inspectionEyebrow: '检验适用范围',
 	harvestEyebrow: '采收血缘',
 };
-const towerLabel = data.towers.length > 0 ? data.towers.map((item) => item.label).join('、') : labels.pending;
+const towerLabel = data.towers.length > 0 ? data.towers.map((item) => item.label).join('、') : data.productionRecords.find(record => record.type === 'transplant')?.sourceScope;
+const loopLabel = data.nutrientLoops.length > 0 ? data.nutrientLoops.map(item => item.label).join('、') : data.productionRecords.find(record => record.type === 'irrigation')?.sourceScope;
 const inspectionLabel = data.inspections.length > 0
 	? data.inspections.map((item) => item.result).join(' / ')
 	: labels.pending;
@@ -112,11 +115,12 @@ const inspectionLabel = data.inspections.length > 0
 				<h1>{data.title}</h1>
 				<dl class="trace-facts">
 					<div><dt>{labels.crop}</dt><dd>{data.crop.name}{data.crop.cultivar && ` · ${data.crop.cultivar}`}</dd></div>
-					<div><dt>{labels.where}</dt><dd>{data.farm.location ?? data.farm.name}<small>{towerLabel}</small></dd></div>
-					<div><dt>{labels.started}</dt><dd>{formatTraceDate(data.startedAt, locale)}</dd></div>
-					<div><dt>{labels.harvest}</dt><dd>{data.harvestBatches.length > 0 ? formatTraceDate(data.harvestBatches[0].harvestedAt, locale) : labels.pending}</dd></div>
-					<div><dt>{labels.inspection}</dt><dd>{inspectionLabel}</dd></div>
-					<div><dt>{labels.inputs}</dt><dd>{data.nutrientLoops.length > 0 ? data.nutrientLoops.map((item) => item.label).join('、') : labels.pending}</dd></div>
+					<div><dt>{labels.where}</dt><dd>{data.farm.location ?? data.farm.name}{towerLabel && <small>{towerLabel}</small>}</dd></div>
+					{data.startedAt && <div><dt>{labels.started}</dt><dd>{formatTraceDate(data.startedAt, locale)}</dd></div>}
+					{data.declaredMemberCount != null && <div><dt>{isEnglish ? 'Transplanted' : '移栽数量'}</dt><dd>{data.declaredMemberCount}{isEnglish ? ' plants' : ' 株'}</dd></div>}
+					{data.harvestBatches.length > 0 && <div><dt>{labels.harvest}</dt><dd>{formatTraceDate(data.harvestBatches[0].harvestedAt, locale)}</dd></div>}
+					{data.inspections.length > 0 && <div><dt>{labels.inspection}</dt><dd>{inspectionLabel}</dd></div>}
+					{loopLabel && <div><dt>{labels.inputs}</dt><dd>{loopLabel}</dd></div>}
 				</dl>
 			</div>
 		</header>
@@ -126,16 +130,14 @@ const inspectionLabel = data.inspections.length > 0
 			<aside class="record-aside" aria-label={labels.recordScope}>
 				<p class="eyebrow">{labels.recordScope}</p>
 				<dl class="trace-scope-list">
-					<div><dt>{labels.experiment}</dt><dd>{data.sourceExperimentId ? <a href={`${prefix}/experiments/${data.sourceExperimentId.toLowerCase()}`}>{data.sourceExperimentId} ↗</a> : labels.unknown}</dd></div>
+					{data.sourceExperimentId && <div><dt>{labels.experiment}</dt><dd><a href={`${prefix}/experiments/${data.sourceExperimentId.toLowerCase()}`}>{data.sourceExperimentId} ↗</a></dd></div>}
 					<div><dt>{labels.members}</dt><dd>{resolutions[data.memberResolution]}</dd></div>
 					<div><dt>{labels.memberCount}</dt><dd>{data.declaredMemberCount ?? labels.unknown}</dd></div>
 				</dl>
-				<p class="eyebrow trace-rules-title">{labels.dataRules}</p>
-				<ul><li>{isEnglish ? 'Unknown ≠ zero' : '未知 ≠ 0'}</li><li>{isEnglish ? 'Shared ≠ plant-specific' : '共享测量 ≠ 单株测量'}</li><li>{isEnglish ? 'Correction ≠ overwrite' : '更正 ≠ 覆盖历史'}</li></ul>
 			</aside>
 		</section>
 
-		<section class="record-section record-section--dark" aria-labelledby="lineage-title">
+		{data.harvestBatches.length > 0 && <section class="record-section record-section--dark" aria-labelledby="lineage-title">
 			<div class="shell">
 				<div class="record-section__heading record-section__heading--light"><p class="eyebrow">{labels.lineageEyebrow}</p><h2 id="lineage-title">{labels.lineage}</h2><p>{labels.lineageNote}</p></div>
 				<ol class="trace-lineage">
@@ -145,26 +147,26 @@ const inspectionLabel = data.inspections.length > 0
 					<li><span>04</span><strong>{labels.packageOrder}</strong><small>{labels.pending}</small></li>
 				</ol>
 			</div>
-		</section>
+		</section>}
 
 		<section class="record-section shell" aria-labelledby="production-title">
 			<div class="record-section__heading"><p class="eyebrow">{labels.productionEyebrow}</p><h2 id="production-title">{labels.production}</h2></div>
 			{data.productionRecords.length > 0 ? <ol class="record-timeline">{data.productionRecords.map((record) => <li><div class="record-timeline__meta"><span>{record.id}</span><time datetime={record.at}>{record.at}</time></div><div><h3>{record.title}</h3><p>{record.summary}</p></div><div class="record-timeline__status"><span>{record.type}</span><span>{resolutions[record.resolution]}</span><span>{record.sourceScope}</span></div></li>)}</ol> : <p class="trace-empty">{labels.none}</p>}
 		</section>
 
-		<section class="record-section record-section--tint" aria-labelledby="measurements-title">
+		{data.sharedMeasurements.length > 0 && <section class="record-section record-section--tint" aria-labelledby="measurements-title">
 			<div class="shell"><div class="record-section__heading"><p class="eyebrow">{labels.measurementEyebrow}</p><h2 id="measurements-title">{labels.measurements}</h2><p>{labels.measurementsNote}</p></div>
 			{data.sharedMeasurements.length > 0 ? <div class="trace-measurements">{data.sharedMeasurements.map((measurement) => <article><header><span>{measurement.sourceId}</span><time datetime={measurement.at}>{measurement.at}</time></header><h3>{measurement.label}</h3><p>{measurement.value}{measurement.unit && ` ${measurement.unit}`}</p><small>{resolutions[measurement.resolution]} · {measurement.sourceScope} · {measurement.quality}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}</div>
-		</section>
+		</section>}
 
-		<section class="record-section shell" aria-labelledby="inspection-title">
+		{data.inspections.length + data.certificates.length > 0 && <section class="record-section shell" aria-labelledby="inspection-title">
 			<div class="record-section__heading"><p class="eyebrow">{labels.inspectionEyebrow}</p><h2 id="inspection-title">{labels.inspections}</h2></div>
 			{data.inspections.length + data.certificates.length > 0 ? <div class="trace-audit-grid">{data.inspections.map((item) => <article><span>{item.id}</span><h3>{item.type}</h3><p>{item.summary}</p><small>{item.scope} · {item.result} · {item.at}</small></article>)}{data.certificates.map((item) => <article><span>{item.id}</span><h3>{item.type}</h3><p>{item.scope}</p><small>{item.status} · {formatTraceDate(item.issuedAt, locale)}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}
-		</section>
+		</section>}
 
-		<section class="record-section record-section--tint" aria-labelledby="harvest-title">
+		{data.harvestBatches.length > 0 && <section class="record-section record-section--tint" aria-labelledby="harvest-title">
 			<div class="shell"><div class="record-section__heading"><p class="eyebrow">{labels.harvestEyebrow}</p><h2 id="harvest-title">{labels.harvests}</h2></div>
 			{data.harvestBatches.length > 0 ? <div class="trace-audit-grid">{data.harvestBatches.map((item) => <article><span>{item.displayId}</span><h3>{item.id}</h3><p>{item.quantityValue ?? labels.unknown}{item.quantityUnit && ` ${item.quantityUnit}`}</p><small>{resolutions[item.sourceResolution]} · {item.status} · {formatTraceDate(item.harvestedAt, locale)}</small></article>)}</div> : <p class="trace-empty">{labels.none}</p>}</div>
-		</section>
+		</section>}
 	</main>
 </BaseLayout>
