@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {adjacentDates, dateIndex, isDay, parseRecordContract, readDay, readIndex} from '../src/lib/record-days.ts';
+import {adjacentDates, dateIndex, isDay, parseRecordContract, presentProductionDay, readDay, readIndex} from '../src/lib/record-days.ts';
 import {availableRecordDate, calendarArrowDate, monthDays, shiftMonth} from '../src/lib/record-calendar.ts';
 
 test('calendar enables exact indexed days, including gaps inside date bounds',()=>{
@@ -64,4 +64,24 @@ test('no-photo/no-environment day is valid; photos require exact matching day',(
   assert.throws(()=>readDay(payload,id,'2026-10-24'));
   payload.batches[0].records[0].images[0].date='2026-10-24';
   assert.equal(readDay(payload,id,'2026-10-24').batches[0].context.sown_seeds,100);
+});
+
+test('one production-day view preserves two nursery sources without merging dates or seed counts',()=>{
+  const payload=day('2026-10-24');
+  payload.batches=[['a','2026-10-15',100,'approximate_day'],['b','2026-10-22',200,'day']].map(([key,date,n,precision])=>({
+    key,label:key,context:{crop:'生菜',material:key,phase:'育苗中，尚未移苗',sowing:{precision,value:date},tray_holes:n,sown_seeds:n},records:[]
+  }));
+  const before=structuredClone(payload), view=presentProductionDay(payload);
+  assert.deepEqual(view.crops,['生菜']);assert.deepEqual(view.phases,['育苗中，尚未移苗']);
+  assert.deepEqual(view.nurseryOrigins,['约2026-10-15播种 · 100孔 · 100粒','2026-10-22播种 · 200孔 · 200粒']);
+  assert.deepEqual(payload,before);
+});
+
+test('transplanted day keeps the reported correction and does not carry nursery totals into the batch view',()=>{
+  const payload=day('2026-11-05');
+  const daily={id:'count-review',date:payload.date,kind:'daily',title:'观察',fields:[{label:'数量口径',value:'同批49株；11月4日原报39株，11月5日更正'}],images:[]};
+  payload.batches=[{key:'origin',label:'原始育苗来源',context:{crop:'生菜',material:'原始材料',phase:'已移栽',sowing:{precision:'day',value:'2026-10-15'},tray_holes:100,sown_seeds:100},records:[daily]}];
+  const view=presentProductionDay(payload);
+  assert.deepEqual(view.phases,['已移栽']);assert.deepEqual(view.nurseryOrigins,[]);
+  assert.deepEqual(view.records[0].fields,daily.fields);assert.equal(view.records.length,1);
 });

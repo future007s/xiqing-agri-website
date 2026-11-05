@@ -1,12 +1,29 @@
 import {availableRecordDate, calendarArrowDate, monthDays, shiftMonth} from './record-calendar';
-import {adjacentDates, isDay, readDay, readIndex, type RecordDay, type RecordIndex} from './record-days';
+import {adjacentDates, isDay, presentProductionDay, readDay, readIndex, type DayRecord, type RecordDay, type RecordIndex} from './record-days';
 
 const element = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
   const node = document.createElement(tag);
   if (text != null) node.textContent = text;
   return node;
 };
-export function renderRecordDay(day: RecordDay): HTMLElement {
+function appendRecord(section: HTMLElement, record: DayRecord, seenImages: Set<string>) {
+  const observation = element('section'); observation.className = 'record-observation'; observation.dataset.recordId = record.id;
+  observation.append(element('h4', record.title));
+  if (record.status === 'planned') observation.append(element('p', '计划'));
+  const fields = element('ul');
+  for (const field of record.fields) fields.append(element('li', `${field.label}：${field.value}`));
+  observation.append(fields);
+  for (const image of record.images) {
+    if (seenImages.has(image.src)) continue;
+    seenImages.add(image.src);
+    const figure = element('figure'), img = element('img');
+    img.src = image.src; img.alt = image.alt; img.loading = 'lazy'; img.decoding = 'async'; img.dataset.recordDate = image.date;
+    figure.append(img); observation.append(figure);
+  }
+  section.append(observation);
+}
+
+export function renderRecordDay(day: RecordDay, productionBatchLabel?: string): HTMLElement {
   const article = element('article');
   article.dataset.recordDay = day.date;
   article.append(element('h2', day.date));
@@ -19,7 +36,18 @@ export function renderRecordDay(day: RecordDay): HTMLElement {
     }
     section.append(list); article.append(section);
   }
-  for (const batch of day.batches) {
+  const seenImages = new Set<string>();
+  if (productionBatchLabel) {
+    const section = element('section'); section.className = 'record-day-item'; section.dataset.recordProductionBatch = productionBatchLabel;
+    section.append(element('h3', `种植记录 · ${productionBatchLabel}`));
+    const presentation = presentProductionDay(day), list = element('ul'); list.className = 'record-day-batch-context';
+    if (presentation.crops.length) list.append(element('li', `作物：${presentation.crops.join('、')}`));
+    if (presentation.phases.length) list.append(element('li', `${presentation.phases.length > 1 ? '来源阶段' : '阶段'}：${presentation.phases.join('、')}`));
+    for (const origin of presentation.nurseryOrigins) list.append(element('li', `育苗来源：${origin}`));
+    section.append(list);
+    for (const record of presentation.records) appendRecord(section, record, seenImages);
+    article.append(section);
+  } else for (const batch of day.batches) {
     const section = element('section'); section.className = 'record-day-item'; section.dataset.recordBatch = batch.key;
     section.append(element('h3', batch.label));
     const list = element('ul'); list.className = 'record-day-batch-context';
@@ -31,18 +59,7 @@ export function renderRecordDay(day: RecordDay): HTMLElement {
     for (const [label, value] of values) if (value) list.append(element('li', `${label}：${value}`));
     section.append(list);
     for (const record of batch.records) {
-      const observation = element('section'); observation.className = 'record-observation'; observation.dataset.recordId = record.id;
-      observation.append(element('h4', record.title));
-      if (record.status === 'planned') observation.append(element('p', '计划'));
-      const fields = element('ul');
-      for (const field of record.fields) fields.append(element('li', `${field.label}：${field.value}`));
-      observation.append(fields);
-      for (const image of record.images) {
-        const figure = element('figure'), img = element('img');
-        img.src = image.src; img.alt = image.alt; img.loading = 'lazy'; img.decoding = 'async'; img.dataset.recordDate = image.date;
-        figure.append(img); observation.append(figure);
-      }
-      section.append(observation);
+      appendRecord(section, record, seenImages);
     }
     article.append(section);
   }
@@ -141,7 +158,7 @@ export async function initRecordBrowser(root: HTMLElement) {
       if (!response.ok) throw new Error('Day unavailable');
       const day = readDay(await response.json(), experimentId, date);
       if (request !== currentRequest) return;
-      target.replaceChildren(renderRecordDay(day)); target.removeAttribute('aria-busy');
+      target.replaceChildren(renderRecordDay(day, root.dataset.productionBatchLabel)); target.removeAttribute('aria-busy');
       status.textContent = `${date} · ${fallback ? '已切换至有记录日期' : '已载入'}`;
       if (pendingScrollRestore != null) {const top = pendingScrollRestore; pendingScrollRestore = null; restoreScrollPosition(top);}
     } catch {

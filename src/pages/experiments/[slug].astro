@@ -37,7 +37,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 		<div class="shell">
             {dayContract && <header class="record-summary-header">
                 <div><p class="eyebrow">{data.id} · {data.tower}</p><h1>{data.title}</h1><p class="record-summary-start">开始日期 {formatDate(data.startDate)}</p></div>
-                <RecordDatePicker experimentId={data.id} slug={experiment.id} />
+                <RecordDatePicker experimentId={data.id} slug={experiment.id} productionBatchLabel={linkedProductionBatches.length === 1 ? linkedProductionBatches[0].data.displayId : undefined} />
             </header>}
 			<div class="section-heading section-heading--light section-heading--row">
 				<div><p class="eyebrow">MEASUREMENTS</p><h2 id="data-title">数据摘要</h2></div>

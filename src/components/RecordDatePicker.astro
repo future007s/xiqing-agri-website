@@ -1,8 +1,8 @@
 ---
-interface Props { experimentId: string; slug: string }
-const {experimentId, slug} = Astro.props;
+interface Props { experimentId: string; slug: string; productionBatchLabel?: string }
+const {experimentId, slug, productionBatchLabel} = Astro.props;
 ---
-<section class="record-date-picker" data-record-browser data-experiment-id={experimentId} data-record-base={`/record-days/${slug}`} aria-label="按日期查看记录">
+<section class="record-date-picker" data-record-browser data-experiment-id={experimentId} data-production-batch-label={productionBatchLabel} data-record-base={`/record-days/${slug}`} aria-label="按日期查看记录">
   <div class="record-date-picker__form">
     <span>记录日期</span>
     <button type="button" data-record-previous aria-label="较早一天的记录" disabled>←</button>

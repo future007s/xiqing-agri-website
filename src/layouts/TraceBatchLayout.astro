@@ -23,6 +23,9 @@ const alternate = (await getCollection(isEnglish ? 'traceBatches' : 'traceBatche
 const alternatePath = alternate ? `${isEnglish ? '' : '/en'}/trace/${alternate.id}` : `${isEnglish ? '' : '/en'}/trace`;
 const statusLabel = isEnglish ? traceStatusLabelsEn[data.status] : traceStatusLabels[data.status];
 const resolutions = isEnglish ? resolutionLabelsEn : resolutionLabels;
+const productionTypeLabels: Record<string, string> = isEnglish
+  ? {transplant: 'Transplanting', irrigation: 'Water and nutrients', count_correction: 'Count correction'}
+  : {transplant: '移栽', irrigation: '水肥', count_correction: '数量更正'};
 const title = isEnglish
 	? `${data.displayId} Trace Record | XIQING AGRI`
 	: `${data.displayId} 追溯记录 | 曦清农业 XIQING AGRI`;
@@ -151,7 +154,7 @@ const inspectionLabel = data.inspections.length > 0
 
 		<section class="record-section shell" aria-labelledby="production-title">
 			<div class="record-section__heading"><p class="eyebrow">{labels.productionEyebrow}</p><h2 id="production-title">{labels.production}</h2></div>
-			{data.productionRecords.length > 0 ? <ol class="record-timeline">{data.productionRecords.map((record) => <li><div class="record-timeline__meta"><span>{record.id}</span><time datetime={record.at}>{record.at}</time></div><div><h3>{record.title}</h3><p>{record.summary}</p></div><div class="record-timeline__status"><span>{record.type}</span><span>{resolutions[record.resolution]}</span><span>{record.sourceScope}</span></div></li>)}</ol> : <p class="trace-empty">{labels.none}</p>}
+			{data.productionRecords.length > 0 ? <ol class="record-timeline">{data.productionRecords.map((record) => <li><div class="record-timeline__meta"><span>{record.id}</span><time datetime={record.at}>{record.at}</time></div><div><h3>{record.title}</h3><p>{record.summary}</p></div><div class="record-timeline__status"><span>{productionTypeLabels[record.type] ?? record.type}</span><span>{resolutions[record.resolution]}</span><span>{record.sourceScope}</span></div></li>)}</ol> : <p class="trace-empty">{labels.none}</p>}
 		</section>
 
 		{data.sharedMeasurements.length > 0 && <section class="record-section record-section--tint" aria-labelledby="measurements-title">

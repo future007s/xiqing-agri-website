@@ -19,6 +19,20 @@ export interface RecordContract {
 }
 export interface RecordIndex { schema_version: 1; experiment_id: string; latest: string | null; dates: string[] }
 
+export function presentProductionDay(day: RecordDay) {
+  const contexts = day.batches.map(batch => batch.context);
+  const unique = (values: string[]) => [...new Set(values.filter(Boolean))];
+  const nurseryOrigins = contexts.filter(context => context.phase.includes('育苗')).map(context => [
+    context.sowing.value ? `${context.sowing.precision === 'approximate_day' ? '约' : ''}${context.sowing.value}播种` : '',
+    context.tray_holes == null ? '' : `${context.tray_holes}孔`,
+    context.sown_seeds == null ? '' : `${context.sown_seeds}粒`,
+  ].filter(Boolean).join(' · '));
+  const order = {daily: 0, operation: 1, anomaly: 2};
+  return { crops: unique(contexts.map(context => context.crop)), phases: unique(contexts.map(context => context.phase)),
+    nurseryOrigins: unique(nurseryOrigins),
+    records: day.batches.flatMap(batch => batch.records).sort((a, b) => order[a.kind] - order[b.kind]) };
+}
+
 export function isDay(value: unknown): value is string {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(value + 'T00:00:00Z');
