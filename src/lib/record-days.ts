@@ -19,13 +19,13 @@ export interface RecordContract {
 }
 export interface RecordIndex { schema_version: 1; experiment_id: string; latest: string | null; dates: string[] }
 
-export function presentProductionDay(day: RecordDay) {
+export function presentProductionDay(day: RecordDay, locale: 'zh' | 'en' = 'zh') {
   const contexts = day.batches.map(batch => batch.context);
   const unique = (values: string[]) => [...new Set(values.filter(Boolean))];
-  const nurseryOrigins = contexts.filter(context => context.phase.includes('育苗')).map(context => [
-    context.sowing.value ? `${context.sowing.precision === 'approximate_day' ? '约' : ''}${context.sowing.value}播种` : '',
-    context.tray_holes == null ? '' : `${context.tray_holes}孔`,
-    context.sown_seeds == null ? '' : `${context.sown_seeds}粒`,
+  const nurseryOrigins = contexts.filter(context => (context.phase.includes('育苗') || context.phase.toLowerCase().includes('nursery'))).map(context => [
+    context.sowing.value ? locale === 'en' ? `${context.sowing.precision === 'approximate_day' ? 'approx. ' : ''}${context.sowing.value} sown` : `${context.sowing.precision === 'approximate_day' ? '约' : ''}${context.sowing.value}播种` : '',
+    context.tray_holes == null ? '' : `${context.tray_holes}${locale === 'en' ? ' cells' : '孔'}`,
+    context.sown_seeds == null ? '' : `${context.sown_seeds}${locale === 'en' ? ' seeds' : '粒'}`,
   ].filter(Boolean).join(' · '));
   const order = {daily: 0, operation: 1, anomaly: 2};
   return { crops: unique(contexts.map(context => context.crop)), phases: unique(contexts.map(context => context.phase)),

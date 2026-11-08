@@ -1,3 +1,4 @@
+import {mediaText as t, mediaError} from '../lib/media-i18n';
 export {};
 
 interface ManagedMedia {
@@ -48,7 +49,7 @@ const toDateTimeLocal = (value: string): string => {
 	return Number.isFinite(date.getTime()) ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
 };
 
-const statusLabel = (media: ManagedMedia): string => media.purgeState === 'purging' ? '删除待完成' : media.deletedAt ? '已软删除' : media.reviewStatus === 'confirmed' ? '已确认' : media.reviewStatus === 'rejected' ? '已拒绝' : '待审核';
+const statusLabel = (media: ManagedMedia): string => media.purgeState === 'purging' ? t('删除待完成') : media.deletedAt ? t('已软删除') : media.reviewStatus === 'confirmed' ? t('已确认') : media.reviewStatus === 'rejected' ? t('已拒绝') : t('待审核');
 
 const createField = (labelText: string, control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): HTMLLabelElement => {
 	const label = document.createElement('label');
@@ -71,7 +72,7 @@ const select = <T extends string>(value: T, options: readonly T[]): HTMLSelectEl
 	for (const optionValue of options) {
 		const option = document.createElement('option');
 		option.value = optionValue;
-		option.textContent = optionValue === 'public' ? '公开实验页' : optionValue === 'private' ? '仅内部' : optionValue === 'pending' ? '待审核' : optionValue === 'confirmed' ? '已确认' : '已拒绝';
+		option.textContent = optionValue === 'public' ? t('公开实验页') : optionValue === 'private' ? t('仅内部') : optionValue === 'pending' ? t('待审核') : optionValue === 'confirmed' ? t('已确认') : t('已拒绝');
 		option.selected = optionValue === value;
 		control.append(option);
 	}
@@ -84,7 +85,7 @@ const request = async (url: string, init: RequestInit = {}): Promise<ManagedResp
 	if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
 	const response = await fetch(url, { ...init, headers });
 	const payload = (await response.json().catch(() => ({}))) as ManagedResponse;
-	if (!response.ok) throw new Error(payload.error || `请求失败（${response.status}）`);
+	if (!response.ok) throw new Error(payload.error || `${t('操作失败。')} (${response.status})`);
 	return payload;
 };
 
@@ -93,7 +94,7 @@ const load = async (): Promise<void> => {
 	const loadGeneration = ++generation;
 	previewUrls.forEach((url) => URL.revokeObjectURL(url)); previewUrls.clear();
 	list.replaceChildren();
-	statusMessage.textContent = '正在读取媒体索引……';
+	statusMessage.textContent = t('正在读取媒体索引……');
 	const query = currentExperiment ? `?experimentId=${encodeURIComponent(currentExperiment)}` : '';
 	try {
 		const payload = await request(`/api/media${query}`);
@@ -101,10 +102,10 @@ const load = async (): Promise<void> => {
 		const media = Array.isArray(payload.media) ? payload.media : [];
 		list.replaceChildren(...media.map(renderCard));
 		results.hidden = false;
-		summary.textContent = `${media.length} 条记录${currentExperiment ? ` · 实验 ${currentExperiment}` : ''}。已软删除记录仍会列出。`;
-		statusMessage.textContent = '读取完成。';
+		summary.textContent = document.documentElement.lang === 'en' ? `${media.length} records${currentExperiment ? ` · Experiment ${currentExperiment}` : ''}. Includes soft-deleted records.` : `${media.length} 条记录${currentExperiment ? ` · 实验 ${currentExperiment}` : ''}。已软删除记录仍会列出。`;
+		statusMessage.textContent = t('读取完成。');
 	} catch (error) {
-		statusMessage.textContent = error instanceof Error ? error.message : '读取失败，请稍后重试。';
+		statusMessage.textContent = error instanceof Error ? mediaError(error.message) : t('读取失败，请稍后重试。');
 	}
 };
 
@@ -125,14 +126,14 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 	preview.className = 'management-card__preview';
 	const previewButton = document.createElement('button');
 	previewButton.type = 'button';
-	previewButton.textContent = media.storageBackend === 'legacy_public' ? '旧文件待迁移' : media.deletedAt ? '恢复后可预览' : '加载预览';
+	previewButton.textContent = media.storageBackend === 'legacy_public' ? t('旧文件待迁移') : media.deletedAt ? t('恢复后可预览') : t('加载预览');
 	previewButton.disabled = !!media.deletedAt || media.storageBackend !== 'private_r2';
 	previewButton.addEventListener('click', async () => {
 		const previewGeneration = generation;
 		previewButton.disabled = true;
 		try {
 			const response = await fetch(`/api/media/${encodeURIComponent(media.id)}/content`, { headers: { Authorization: `Bearer ${currentToken}` } });
-			if (!response.ok) throw new Error('文件暂不可访问。');
+			if (!response.ok) throw new Error(t('文件暂不可访问。'));
 			const blob = await response.blob();
 			if (previewGeneration !== generation) return;
 			const url = URL.createObjectURL(blob); previewUrls.add(url);
@@ -143,7 +144,7 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 			const link = document.createElement('a'); link.href = url; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = media.id;
 			preview.replaceChildren(element, link);
 		} catch (error) {
-			previewButton.textContent = error instanceof Error ? error.message : '预览失败';
+			previewButton.textContent = error instanceof Error ? mediaError(error.message) : t('预览失败');
 			previewButton.disabled = false;
 		}
 	});
@@ -162,16 +163,16 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 	const visibility = select(media.visibility, ['public', 'private'] as const);
 	const reviewStatus = select(media.reviewStatus, ['pending', 'confirmed', 'rejected'] as const);
 	const reason = input('');
-	reason.placeholder = '可选：修改或删除原因';
+	reason.placeholder = t('可选：修改或删除原因');
 	form.append(
-		createField('拍摄时间', capturedAt),
-		createField('媒体说明', caption),
-		createField('无障碍描述', alt),
-		createField('关联事件', eventId),
-		createField('关联植物', plantId),
-		createField('可见范围', visibility),
-		createField('审核状态', reviewStatus),
-		createField('操作原因', reason),
+		createField(t('拍摄时间'), capturedAt),
+		createField(t('媒体说明'), caption),
+		createField(t('无障碍描述'), alt),
+		createField(t('关联事件'), eventId),
+		createField(t('关联植物'), plantId),
+		createField(t('可见范围'), visibility),
+		createField(t('审核状态'), reviewStatus),
+		createField(t('操作原因'), reason),
 	);
 	card.append(form);
 
@@ -181,7 +182,7 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 	save.className = 'button button--dark';
 	save.type = 'button';
 	save.disabled = media.purgeState === 'purging';
-	save.textContent = '保存修改';
+	save.textContent = t('保存修改');
 	save.addEventListener('click', async () => {
 		save.disabled = true;
 		try {
@@ -189,10 +190,10 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 				method: 'PATCH',
 				body: JSON.stringify({ capturedAt: capturedAt.value === toDateTimeLocal(media.at) ? media.at : capturedAt.value ? new Date(capturedAt.value).toISOString() : '', caption: caption.value, alt: alt.value, eventId: eventId.value, plantId: plantId.value, visibility: visibility.value, reviewStatus: reviewStatus.value, reason: reason.value }),
 			});
-			statusMessage!.textContent = `${media.id} 已保存。`;
+			statusMessage!.textContent = `${media.id} ${t('已保存。')}`;
 			await load();
 		} catch (error) {
-			statusMessage!.textContent = error instanceof Error ? error.message : '保存失败。';
+			statusMessage!.textContent = error instanceof Error ? mediaError(error.message) : t('保存失败。');
 		} finally {
 			save.disabled = false;
 		}
@@ -203,7 +204,7 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 	remove.className = 'button';
 	remove.type = 'button';
 	remove.disabled = media.purgeState === 'purging';
-	remove.textContent = media.deletedAt ? '恢复记录' : '软删除';
+	remove.textContent = media.deletedAt ? t('恢复记录') : t('软删除');
 	remove.addEventListener('click', async () => {
 		remove.disabled = true;
 		try {
@@ -212,10 +213,10 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 			} else {
 				await request(`/api/media/${encodeURIComponent(media.id)}?reason=${encodeURIComponent(reason.value)}`, { method: 'DELETE' });
 			}
-			statusMessage!.textContent = media.deletedAt ? `${media.id} 已恢复。` : `${media.id} 已软删除。`;
+			statusMessage!.textContent = media.deletedAt ? `${media.id} ${t('已恢复。')}` : `${media.id} ${t('已软删除。')}`;
 			await load();
 		} catch (error) {
-			statusMessage!.textContent = error instanceof Error ? error.message : '操作失败。';
+			statusMessage!.textContent = error instanceof Error ? mediaError(error.message) : t('操作失败。');
 		} finally {
 			remove.disabled = false;
 		}
@@ -226,17 +227,17 @@ const renderCard = (media: ManagedMedia): HTMLElement => {
 		const purge = document.createElement('button');
 		purge.className = 'button button--danger';
 		purge.type = 'button';
-		purge.textContent = media.purgeState === 'purging' ? '重试彻底删除' : '彻底删除';
+		purge.textContent = media.purgeState === 'purging' ? t('重试彻底删除') : t('彻底删除');
 		purge.disabled = media.storageBackend !== 'private_r2';
 		purge.addEventListener('click', async () => {
-			if (!window.confirm('这会同时删除 R2 文件和 D1 记录，且无法恢复。确认彻底删除吗？')) return;
+			if (!window.confirm(t('这会同时删除 R2 文件和 D1 记录，且无法恢复。确认彻底删除吗？'))) return;
 			purge.disabled = true;
 			try {
 				await request(`/api/media/${encodeURIComponent(media.id)}/purge?reason=${encodeURIComponent(reason.value)}`, { method: 'POST', headers: { 'X-Confirm-Purge': 'PURGE' } });
-				statusMessage!.textContent = `${media.id} 已彻底删除。`;
+				statusMessage!.textContent = `${media.id} ${t('已彻底删除。')}`;
 				await load();
 			} catch (error) {
-				statusMessage!.textContent = error instanceof Error ? error.message : '彻底删除失败。';
+				statusMessage!.textContent = error instanceof Error ? mediaError(error.message) : t('彻底删除失败。');
 			} finally {
 				purge.disabled = false;
 			}

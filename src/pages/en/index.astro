@@ -7,12 +7,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { displayValue, sortExperimentsNewestFirst, statusLabelsEn } from '../../lib/experiments';
 
 const translatedExperiments = (await getCollection('experimentsEn', isPublicExperiment)).sort(sortExperimentsNewestFirst);
-const experiments = translatedExperiments.length ? translatedExperiments : (await getCollection('experiments', isPublicExperiment)).sort(sortExperimentsNewestFirst);
-const experimentPrefix = translatedExperiments.length ? '/en' : '';
+const experiments = translatedExperiments;
+const experimentPrefix = '/en';
 
 const featuredExperiment = experiments.find(({ data }) => data.featured) ?? experiments[0];
 const latestExperiments = experiments.slice(0, 3);
-const growing = featuredExperiment ? currentGrowingRecord(featuredExperiment) : undefined;
+const growing = featuredExperiment ? currentGrowingRecord(featuredExperiment, 'en') : undefined;
 const description =
 	'XIQING AGRI openly documents aeroponics, natural-light cultivation, sensors and automation through real costs, energy use, yields, failures and engineering iterations.';
 ---
@@ -99,7 +99,7 @@ const description =
 					<a class="text-link" href="/en/experiments">View all records <span aria-hidden="true">→</span></a>
 				</div>
 				<div class="experiment-list">
-					{latestExperiments.map((experiment) => <ExperimentCard experiment={experiment} locale={translatedExperiments.length ? "en" : "zh"} />)}
+					{latestExperiments.map((experiment) => <ExperimentCard experiment={experiment} locale="en" />)}
 				</div>
 			</div>
 		</section>

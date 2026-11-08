@@ -1,4 +1,4 @@
-import { parseRecordContract } from './record-days';
+import { parseRecordContract } from './record-days.ts';
 
 // Keep the original starter records in source without publishing them as field records.
 export function isPublicExperiment(entry: { data: { id: string } }): boolean {
@@ -18,11 +18,11 @@ export function productionBatchesForExperiment<T extends BatchIdentity>(experime
 		.sort((a, b) => b.data.id.localeCompare(a.data.id));
 }
 
-export function currentGrowingRecord(experiment: { body?: string; data: { id: string } }) {
+export function currentGrowingRecord(experiment: { body?: string; data: { id: string } }, locale: 'zh' | 'en' = 'zh') {
 	const day = parseRecordContract(experiment.body, experiment.data.id)?.days.at(-1);
 	const records = day?.batches.flatMap(batch => batch.records) ?? [];
-	const operations = records.filter(record => record.kind === 'operation').flatMap(record => record.fields.filter(field => field.label === '操作'));
-	const observations = records.filter(record => record.kind === 'daily').flatMap(record => record.fields.filter(field => field.label === '可见范围与变化'));
-	return { date: day?.date, phase: [...new Set(day?.batches.map(batch => batch.context.phase))].join('、'),
-		summary: (operations.length ? operations : observations).map(field => field.value).join('；') };
+	const operations = records.filter(record => record.kind === 'operation').flatMap(record => record.fields.filter(field => field.label === (locale === 'en' ? 'Operation' : '操作')));
+	const observations = records.filter(record => record.kind === 'daily').flatMap(record => record.fields.filter(field => field.label === (locale === 'en' ? 'Visible condition and changes' : '可见范围与变化')));
+	return { date: day?.date, phase: [...new Set(day?.batches.map(batch => batch.context.phase))].join(locale === 'en' ? ', ' : '、'),
+		summary: (operations.length ? operations : observations).map(field => field.value).join(locale === 'en' ? '; ' : '；') };
 }

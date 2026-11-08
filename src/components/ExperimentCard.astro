@@ -11,7 +11,7 @@ interface Props {
 const { experiment, locale = 'zh' } = Astro.props;
 const { data } = experiment;
 const isEnglish = locale === 'en';
-const growing = currentGrowingRecord(experiment);
+const growing = currentGrowingRecord(experiment, locale);
 const href = `${isEnglish ? '/en' : ''}/experiments/${experiment.id}`;
 const labels = isEnglish
 	? { date: 'Date', tower: 'Tower', crop: 'Crop', yield: 'Yield', view: 'View experiment', pending: 'Pending' }

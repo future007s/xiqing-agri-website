@@ -1,3 +1,4 @@
+import {recordText, type RecordLocale} from './record-i18n';
 import {availableRecordDate, calendarArrowDate, monthDays, shiftMonth} from './record-calendar';
 import {adjacentDates, isDay, presentProductionDay, readDay, readIndex, type DayRecord, type RecordDay, type RecordIndex} from './record-days';
 
@@ -6,12 +7,13 @@ const element = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) =
   if (text != null) node.textContent = text;
   return node;
 };
-function appendRecord(section: HTMLElement, record: DayRecord, seenImages: Set<string>) {
+function appendRecord(section: HTMLElement, record: DayRecord, seenImages: Set<string>, locale: RecordLocale) {
+  const t = (text: string) => recordText(text, locale);
   const observation = element('section'); observation.className = 'record-observation'; observation.dataset.recordId = record.id;
   observation.append(element('h4', record.title));
-  if (record.status === 'planned') observation.append(element('p', '计划'));
+  if (record.status === 'planned') observation.append(element('p', t('计划')));
   const fields = element('ul');
-  for (const field of record.fields) fields.append(element('li', `${field.label}：${field.value}`));
+  for (const field of record.fields) fields.append(element('li', `${field.label}${locale === 'en' ? ': ' : '：'}${field.value}`));
   observation.append(fields);
   for (const image of record.images) {
     if (seenImages.has(image.src)) continue;
@@ -23,13 +25,15 @@ function appendRecord(section: HTMLElement, record: DayRecord, seenImages: Set<s
   section.append(observation);
 }
 
-export function renderRecordDay(day: RecordDay, productionBatchLabel?: string): HTMLElement {
+export function renderRecordDay(day: RecordDay, productionBatchLabel?: string, locale: RecordLocale = 'zh'): HTMLElement {
+  const t = (text: string) => recordText(text, locale);
+  const separator = locale === 'en' ? ': ' : '：', joiner = locale === 'en' ? ', ' : '、';
   const article = element('article');
   article.dataset.recordDay = day.date;
   article.append(element('h2', day.date));
   if (day.environment.length) {
     const section = element('section'); section.className = 'record-day-item'; section.dataset.dayEnvironment = '';
-    section.append(element('h3', '环境记录'));
+    section.append(element('h3', t('环境记录')));
     const list = element('dl'); list.className = 'record-day-environment';
     for (const environment of day.environment) for (const metric of environment.metrics) {
       const pair = element('div'); pair.append(element('dt', metric.label), element('dd', `${metric.mean} ${metric.unit}`)); list.append(pair);
@@ -39,27 +43,27 @@ export function renderRecordDay(day: RecordDay, productionBatchLabel?: string): 
   const seenImages = new Set<string>();
   if (productionBatchLabel) {
     const section = element('section'); section.className = 'record-day-item'; section.dataset.recordProductionBatch = productionBatchLabel;
-    section.append(element('h3', `种植记录 · ${productionBatchLabel}`));
-    const presentation = presentProductionDay(day), list = element('ul'); list.className = 'record-day-batch-context';
-    if (presentation.crops.length) list.append(element('li', `作物：${presentation.crops.join('、')}`));
-    if (presentation.phases.length) list.append(element('li', `${presentation.phases.length > 1 ? '来源阶段' : '阶段'}：${presentation.phases.join('、')}`));
-    for (const origin of presentation.nurseryOrigins) list.append(element('li', `育苗来源：${origin}`));
+    section.append(element('h3', `${t('种植记录')} · ${productionBatchLabel}`));
+    const presentation = presentProductionDay(day, locale), list = element('ul'); list.className = 'record-day-batch-context';
+    if (presentation.crops.length) list.append(element('li', `${t('作物')}${separator}${presentation.crops.join(joiner)}`));
+    if (presentation.phases.length) list.append(element('li', `${t(presentation.phases.length > 1 ? '来源阶段' : '阶段')}${separator}${presentation.phases.join(joiner)}`));
+    for (const origin of presentation.nurseryOrigins) list.append(element('li', `${t('育苗来源')}${separator}${origin}`));
     section.append(list);
-    for (const record of presentation.records) appendRecord(section, record, seenImages);
+    for (const record of presentation.records) appendRecord(section, record, seenImages, locale);
     article.append(section);
   } else for (const batch of day.batches) {
     const section = element('section'); section.className = 'record-day-item'; section.dataset.recordBatch = batch.key;
     section.append(element('h3', batch.label));
     const list = element('ul'); list.className = 'record-day-batch-context';
     const c = batch.context;
-    const values = [['作物', c.crop], ['材料', c.material],
-      ['播种日期', c.sowing.value ? (c.sowing.precision === 'approximate_day' ? '约' : '') + c.sowing.value : null],
-      ['育苗盘', c.tray_holes == null ? null : `${c.tray_holes}孔`],
-      ['播种数量', c.sown_seeds == null ? null : `${c.sown_seeds}粒`], ['阶段', c.phase]];
-    for (const [label, value] of values) if (value) list.append(element('li', `${label}：${value}`));
+    const values = [[t('作物'), c.crop], [t('材料'), c.material],
+      [t('播种日期'), c.sowing.value ? (c.sowing.precision === 'approximate_day' ? t('约') : '') + c.sowing.value : null],
+      [t('育苗盘'), c.tray_holes == null ? null : `${c.tray_holes}${t('孔')}`],
+      [t('播种数量'), c.sown_seeds == null ? null : `${c.sown_seeds}${t('粒')}`], [t('阶段'), c.phase]];
+    for (const [label, value] of values) if (value) list.append(element('li', `${label}${separator}${value}`));
     section.append(list);
     for (const record of batch.records) {
-      appendRecord(section, record, seenImages);
+      appendRecord(section, record, seenImages, locale);
     }
     article.append(section);
   }
@@ -69,6 +73,8 @@ export function renderRecordDay(day: RecordDay, productionBatchLabel?: string): 
 export async function initRecordBrowser(root: HTMLElement) {
   if (root.dataset.initialized) return;
   root.dataset.initialized = 'true';
+  const locale: RecordLocale = root.dataset.locale === 'en' ? 'en' : 'zh';
+  const t = (text: string) => recordText(text, locale);
   const previous = root.querySelector<HTMLButtonElement>('[data-record-previous]')!;
   const next = root.querySelector<HTMLButtonElement>('[data-record-next]')!;
   const trigger = root.querySelector<HTMLButtonElement>('[data-calendar-trigger]')!;
@@ -111,7 +117,7 @@ export async function initRecordBrowser(root: HTMLElement) {
     grid.querySelector<HTMLButtonElement>(`button[data-calendar-day="${date}"]:not(:disabled)`)?.focus();
   };
   const renderMonth = (moveFocus = true) => {
-    monthLabel.textContent = `${month.slice(0,4)}年${Number(month.slice(5))}月`;
+    monthLabel.textContent = new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'zh-CN', {month:'long', year:'numeric', timeZone:'UTC'}).format(new Date(month + '-01T00:00:00Z'));
     monthPrevious.disabled = month <= index.dates[0].slice(0,7);
     monthNext.disabled = month >= index.dates.at(-1)!.slice(0,7);
     const cells = monthDays(month, index.dates);
@@ -152,19 +158,19 @@ export async function initRecordBrowser(root: HTMLElement) {
       if (fallback) history.replaceState(null, '', url); else if (url.href !== location.href) history.pushState(null, '', url);
     }
     target.setAttribute('aria-busy', 'true'); target.replaceChildren();
-    status.textContent = `${date} · 正在读取…`; message('正在读取当天记录…');
+    status.textContent = `${date} · ${t('正在读取…')}`; message(t('正在读取当天记录…'));
     try {
       const response = await fetch(`${base}/${date}.json`, {signal: controller.signal, cache: 'no-cache'});
       if (!response.ok) throw new Error('Day unavailable');
       const day = readDay(await response.json(), experimentId, date);
       if (request !== currentRequest) return;
-      target.replaceChildren(renderRecordDay(day, root.dataset.productionBatchLabel)); target.removeAttribute('aria-busy');
-      status.textContent = `${date} · ${fallback ? '已切换至有记录日期' : '已载入'}`;
+      target.replaceChildren(renderRecordDay(day, root.dataset.productionBatchLabel, locale)); target.removeAttribute('aria-busy');
+      status.textContent = `${date} · ${fallback ? t('已切换至有记录日期') : t('已载入')}`;
       if (pendingScrollRestore != null) {const top = pendingScrollRestore; pendingScrollRestore = null; restoreScrollPosition(top);}
     } catch {
       if (request !== currentRequest || controller.signal.aborted) return;
-      status.textContent = `${date} · 读取失败`; retry.hidden = false;
-      message('当天记录暂时无法读取，请重试。'); target.removeAttribute('aria-busy');
+      status.textContent = `${date} · ${t('读取失败')}`; retry.hidden = false;
+      message(t('当天记录暂时无法读取，请重试。')); target.removeAttribute('aria-busy');
       if (pendingScrollRestore != null) {const top = pendingScrollRestore; pendingScrollRestore = null; restoreScrollPosition(top);}
     }
   };
@@ -206,11 +212,11 @@ export async function initRecordBrowser(root: HTMLElement) {
     const response = await fetch(`${base}/index.json`, {cache: 'no-cache'});
     if (!response.ok) throw new Error('Index unavailable');
     index = readIndex(await response.json(), experimentId);
-    if (!index.latest) {selectedLabel.textContent='暂无记录'; status.textContent='暂无记录'; message('暂无记录。'); return;}
+    if (!index.latest) {selectedLabel.textContent=t('暂无记录'); status.textContent=t('暂无记录'); message(t('暂无记录。')); return;}
     trigger.disabled = false;
     const resolved = availableRecordDate(index.dates, new URL(location.href).searchParams.get('date'));
     await show(resolved.date!, false, resolved.unavailable);
   } catch {
-    status.textContent = '日期暂时无法读取'; message('记录暂时无法读取，请刷新页面重试。');
+    status.textContent = t('日期暂时无法读取'); message(t('记录暂时无法读取，请刷新页面重试。'));
   }
 }

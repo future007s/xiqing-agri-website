@@ -1,9 +1,11 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
-import { isPublicExperiment } from '../../../lib/public-records';
+import { isPublicExperiment, isPublicTraceBatch, productionBatchesForExperiment } from '../../../lib/public-records';
 import MetricCard from '../../../components/MetricCard.astro';
+import RecordDatePicker from '../../../components/RecordDatePicker.astro';
+import { parseRecordContract } from '../../../lib/record-days';
 import ExperimentLayout from '../../../layouts/ExperimentLayout.astro';
-import { displayValue, statusLabelsEn } from '../../../lib/experiments';
+import { displayValue, formatDate, statusLabelsEn as statusLabels } from '../../../lib/experiments';
 
 export async function getStaticPaths() {
 	const experiments = await getCollection('experimentsEn', isPublicExperiment);
@@ -16,8 +18,11 @@ interface Props {
 
 const { experiment } = Astro.props;
 const { data } = experiment;
+const linkedProductionBatches = productionBatchesForExperiment(experiment, await getCollection('traceBatchesEn', isPublicTraceBatch));
+const dayContract = parseRecordContract(experiment.body, data.id);
+const syncedRecord = Boolean(dayContract) || (experiment.body?.includes('<!-- xiqing-record-sync:v1 BEGIN -->') ?? false);
 const { Content } = await render(experiment);
-const description = `${data.id}: ${data.title}. An open record of the experiment design, current status and measured results.`;
+const description = `${data.id}: ${data.title}. Experiment design, status and measured results.`;
 const eventStatusLabels = { planned: 'Planned', completed: 'Completed', failed: 'Failed', paused: 'Paused' };
 const telemetryStatusLabels = { observed: 'Observed', partial: 'Partial', pending: 'Pending sync', invalid: 'Invalid' };
 const qualityLabels = { observed: 'Observed', estimated: 'Estimated', pending: 'Pending', invalid: 'Invalid' };
@@ -27,34 +32,37 @@ const publicObservations = data.observations.filter((item) => item.reviewStatus 
 const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'confirmed');
 ---
 
-<ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description} locale="en">
-	<section class="record-data section--dark" aria-labelledby="data-title">
+<ExperimentLayout id={data.id} title={data.title} tower={data.tower} status={data.status} startDate={data.startDate} description={description} showGuidance={!syncedRecord} compact={Boolean(dayContract)} locale="en">
+	<section class:list={["record-data", "section--dark", {"record-data--compact": Boolean(dayContract)}]} aria-labelledby="data-title">
 		<div class="shell">
+            {dayContract && <header class="record-summary-header">
+                <div><p class="eyebrow">{data.id} · {data.tower}</p><h1>{data.title}</h1><p class="record-summary-start">Start date {formatDate(data.startDate)}</p></div>
+                <RecordDatePicker experimentId={data.id} slug={experiment.id} locale="en" productionBatchLabel={linkedProductionBatches.length === 1 ? linkedProductionBatches[0].data.displayId : undefined} />
+            </header>}
 			<div class="section-heading section-heading--light section-heading--row">
 				<div><p class="eyebrow">MEASUREMENTS</p><h2 id="data-title">Data summary</h2></div>
-				<p class="data-note">NOT MEASURED ≠ ZERO · EMPTY VALUES ARE SHOWN AS “PENDING”</p>
+
 			</div>
 			<div class="metric-grid metric-grid--record">
-				<MetricCard label="Status" value={statusLabelsEn[data.status]} kind="CURRENT" />
+				<MetricCard label="Status" value={statusLabels[data.status]} kind="CURRENT" />
 				<MetricCard label="Tower height" value={displayValue(data.towerHeightM, 'm', 'Pending')} kind="DESIGN" />
 				<MetricCard label="Plant sites" value={displayValue(data.designPlants, '', 'Pending')} kind="DESIGN" />
-				<MetricCard label="Crop" value={data.plant} kind="PLANNED" />
-				<MetricCard label="Survival rate" value={displayValue(data.survivalRate, '%', 'Pending')} kind="MEASURED" pending={data.survivalRate == null} />
-				<MetricCard label="Yield" value={displayValue(data.yieldKg, 'kg', 'Pending')} kind="MEASURED" pending={data.yieldKg == null} />
-				<MetricCard label="Energy" value={displayValue(data.electricityKwh, 'kWh', 'Pending')} kind="MEASURED" pending={data.electricityKwh == null} />
-				<MetricCard label="Water" value={displayValue(data.waterL, 'L', 'Pending')} kind="MEASURED" pending={data.waterL == null} />
-				<MetricCard label="Cost" value={displayValue(data.costCny, 'CNY', 'Pending')} kind="MEASURED" pending={data.costCny == null} />
+				<MetricCard label="Crop" value={data.plant} kind={syncedRecord ? 'Record' : 'PLANNED'} />
+				{(!syncedRecord || data.survivalRate != null) && <MetricCard label="Survival rate" value={displayValue(data.survivalRate, '%', 'Pending')} kind="MEASURED" pending={data.survivalRate == null} />}
+				{(!syncedRecord || data.yieldKg != null) && <MetricCard label="Yield" value={displayValue(data.yieldKg, 'kg', 'Pending')} kind="MEASURED" pending={data.yieldKg == null} />}
+				{(!syncedRecord || data.electricityKwh != null) && <MetricCard label="Energy" value={displayValue(data.electricityKwh, 'kWh', 'Pending')} kind="MEASURED" pending={data.electricityKwh == null} />}
+				{(!syncedRecord || data.waterL != null) && <MetricCard label="Water" value={displayValue(data.waterL, 'L', 'Pending')} kind="MEASURED" pending={data.waterL == null} />}
+				{(!syncedRecord || data.costCny != null) && <MetricCard label="Cost" value={displayValue(data.costCny, 'CNY', 'Pending')} kind="MEASURED" pending={data.costCny == null} />}
 			</div>
-			{data.productionBatchId && <p class="experiment-trace-link"><span>Linked production batch</span><a href={`/en/trace/${data.productionBatchId.toLowerCase()}`}>{data.productionBatchId} ↗</a></p>}
+			{linkedProductionBatches.map(batch => <p class="experiment-trace-link"><span>Linked production batch</span><a href={`/en/trace/${batch.id}`}>{batch.data.displayId} ↗</a></p>)}
 		</div>
 	</section>
-
-	<section class="record-body shell">
-		<article class="prose"><Content /></article>
-		<aside class="record-aside" aria-label="Data rules">
+	<section class:list={["record-body", "shell", {"record-body--daily": Boolean(dayContract)}]}>
+		{dayContract ? <div class="prose record-day-content" data-record-day-content aria-live="polite"><p>Loading daily records…</p></div> : <article class="prose"><Content /></article>}
+		{!syncedRecord && <aside class="record-aside" aria-label="Data rules">
 			<p class="eyebrow">DATA RULES</p>
 			<ul><li>Evidence &gt; promotion</li><li>Measured &gt; assumed</li><li>Unknown ≠ zero</li><li>Design ≠ measured</li><li>Failed data remains</li></ul>
-		</aside>
+		</aside>}
 	</section>
 
 	{data.objectives.length > 0 && (
@@ -133,20 +141,20 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 	)}
 
 	<section class="record-section record-section--tint" aria-labelledby="media-title" data-media-shell data-experiment-id={data.id} hidden={publicMedia.length === 0}>
-		<div class="shell">
-			<div class="record-section__heading"><p class="eyebrow">FIELD MEDIA</p><h2 id="media-title">Photos and videos</h2></div>
-			<div class="media-grid" data-media-grid>
-				{publicMedia.map((item) => <figure class:list={['media-card', `media-card--${item.kind}`]} data-media-id={item.id}>
-					{item.kind === 'image' ? <a href={item.src} target="_blank" rel="noreferrer"><img src={item.thumbnail ?? item.src} alt={item.alt} loading="lazy" decoding="async" /></a> : <video controls preload="metadata" poster={item.poster ?? item.thumbnail}><source src={item.src} /></video>}
-					<figcaption><div><strong>{item.caption}</strong><span>{item.at}</span></div>{(item.eventId || item.plantId) && <small>{item.eventId && `Event ${item.eventId}`}{item.eventId && item.plantId && ' · '}{item.plantId && `Plant ${item.plantId}`}</small>}</figcaption>
-				</figure>)}
+			<div class="shell">
+				<div class="record-section__heading"><p class="eyebrow">FIELD MEDIA</p><h2 id="media-title">Photos and videos</h2></div>
+				<div class="media-grid" data-media-grid>
+					{publicMedia.map((item) => <figure class:list={['media-card', `media-card--${item.kind}`]} data-media-id={item.id}>
+						{item.kind === 'image' ? <a href={item.src} target="_blank" rel="noreferrer"><img src={item.thumbnail ?? item.src} alt={item.alt} loading="lazy" decoding="async" /></a> : <video controls preload="metadata" poster={item.poster ?? item.thumbnail}><source src={item.src} /></video>}
+						<figcaption><div><strong>{item.caption}</strong><span>{item.at}</span></div>{(item.eventId || item.plantId) && <small>{item.eventId && `Event ${item.eventId}`}{item.eventId && item.plantId && ' · '}{item.plantId && `Plant ${item.plantId}`}</small>}</figcaption>
+					</figure>)}
+				</div>
+				<p class="media-empty" data-media-empty hidden>No reviewed public media yet.</p>
 			</div>
-			<p class="media-empty" data-media-empty hidden>No reviewed public media yet.</p>
-		</div>
 	</section>
 </ExperimentLayout>
 
-<script is:inline define:vars={{ experimentId: data.id }}>
+{!dayContract && <script is:inline define:vars={{ experimentId: data.id }}>
 	const mediaShell = document.querySelector('[data-media-shell]');
 	const mediaGrid = document.querySelector('[data-media-grid]');
 	const mediaEmpty = document.querySelector('[data-media-empty]');
@@ -163,7 +171,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 			link.rel = 'noreferrer';
 			const image = document.createElement('img');
 			image.src = item.thumbnail || item.src;
-			image.alt = item.alt || item.caption || 'Experiment media';
+			image.alt = item.altEn || item.captionEn || (!/[\u3400-\u9fff]/u.test(item.alt || '') && item.alt) || 'Experiment photo';
 			image.loading = 'lazy';
 			image.decoding = 'async';
 			link.append(image);
@@ -181,7 +189,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 		const caption = document.createElement('figcaption');
 		const captionRow = document.createElement('div');
 		const title = document.createElement('strong');
-		title.textContent = item.caption || 'Untitled media';
+		title.textContent = item.captionEn || (!/[\u3400-\u9fff]/u.test(item.caption || '') && item.caption) || 'Experiment media';
 		const date = document.createElement('span');
 		date.textContent = item.at || '';
 		captionRow.append(title, date);
@@ -197,7 +205,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 
 	const loadDynamicMedia = async () => {
 		try {
-			const response = await fetch(`/api/experiments/${encodeURIComponent(experimentId)}/media`, { headers: { Accept: 'application/json' } });
+			const response = await fetch(`/api/experiments/${encodeURIComponent(experimentId)}/media?lang=en`, { headers: { Accept: 'application/json' } });
 			if (!response.ok) return;
 			const payload = await response.json();
 			const items = Array.isArray(payload) ? payload : payload.media;
@@ -206,9 +214,9 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
 			if (items.length > 0 && mediaShell) mediaShell.hidden = false;
 			if (mediaGrid && mediaGrid.children.length === 0 && mediaEmpty) mediaEmpty.hidden = false;
 		} catch {
-			// The static site remains usable when the optional media API is not configured.
+			// The static site remains fully usable when the optional media API is not configured.
 		}
 	};
 
 	void loadDynamicMedia();
-</script>
+</script>}

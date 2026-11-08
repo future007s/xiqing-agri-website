@@ -1,3 +1,4 @@
+import {mediaText as t, mediaError} from '../lib/media-i18n';
 interface UploadedMedia {
 	id: string;
 	kind: 'image' | 'video';
@@ -66,7 +67,7 @@ const showPreview = (): void => {
 	} else if (file.type.startsWith('image/')) {
 		const image = document.createElement('img');
 		image.src = previewUrl;
-		image.alt = '待上传图片预览';
+		image.alt = t('待上传图片预览');
 		preview.append(image);
 		if (kindInput) kindInput.value = 'image';
 	}
@@ -82,7 +83,7 @@ const makeSnippet = (media: UploadedMedia): string => Object.entries(media)
 form?.addEventListener('submit', async (event) => {
 	event.preventDefault();
 	if (!fileInput?.files?.[0] || !statusMessage || !result || !resultNote || !snippet) return;
-	statusMessage.textContent = '正在上传并写入媒体索引……';
+	statusMessage.textContent = t('正在上传并写入媒体索引……');
 	result.hidden = true;
 	const formData = new FormData(form);
 	const token = String(formData.get('uploadToken') || '');
@@ -95,19 +96,19 @@ form?.addEventListener('submit', async (event) => {
 			headers: token ? { Authorization: `Bearer ${token}` } : {},
 		});
 		const payload = (await response.json().catch(() => ({}))) as UploadResponse;
-		if (!response.ok || !payload.media) throw new Error(payload.error || `上传失败（${response.status}）`);
-		statusMessage.textContent = payload.deduplicated ? '相同文件已存在，已返回原记录；本次填写不会覆盖原字段。' : '上传成功。请检查字段后粘贴到对应实验模板。';
+		if (!response.ok || !payload.media) throw new Error(payload.error || `${t('上传失败，请稍后重试。')} (${response.status})`);
+		statusMessage.textContent = payload.deduplicated ? t('相同文件已存在，已返回原记录；本次填写不会覆盖原字段。') : t('上传成功。请检查字段后粘贴到对应实验模板。');
 		result.hidden = false;
-		resultNote.textContent = `媒体 ID：${payload.media.id}。私有或待审核文件请在媒体管理中预览。`;
+		resultNote.textContent = document.documentElement.lang === 'en' ? `Media ID: ${payload.media.id}. Preview private or pending media in media management.` : `媒体 ID：${payload.media.id}。私有或待审核文件请在媒体管理中预览。`;
 		snippet.textContent = makeSnippet(payload.media);
 	} catch (error) {
-		statusMessage.textContent = error instanceof Error ? error.message : '上传失败，请稍后重试。';
+		statusMessage.textContent = error instanceof Error ? mediaError(error.message) : t('上传失败，请稍后重试。');
 	}
 });
 
 copyButton?.addEventListener('click', async () => {
 	if (!snippet?.textContent) return;
 	await navigator.clipboard.writeText(snippet.textContent);
-	copyButton.textContent = '已复制 ✓';
-	setTimeout(() => { copyButton.innerHTML = '复制到剪贴板 <span aria-hidden="true">↗</span>'; }, 1800);
+	copyButton.textContent = t('已复制 ✓');
+	setTimeout(() => { copyButton.innerHTML = `${t('复制到剪贴板')} <span aria-hidden="true">↗</span>`; }, 1800);
 });

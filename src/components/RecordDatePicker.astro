@@ -1,23 +1,25 @@
 ---
-interface Props { experimentId: string; slug: string; productionBatchLabel?: string }
-const {experimentId, slug, productionBatchLabel} = Astro.props;
+import {recordText, type RecordLocale} from '../lib/record-i18n';
+interface Props { locale?: RecordLocale; experimentId: string; slug: string; productionBatchLabel?: string }
+const {experimentId, slug, productionBatchLabel, locale = 'zh'} = Astro.props;
+const t = (text: string) => recordText(text, locale);
 ---
-<section class="record-date-picker" data-record-browser data-experiment-id={experimentId} data-production-batch-label={productionBatchLabel} data-record-base={`/record-days/${slug}`} aria-label="按日期查看记录">
+<section class="record-date-picker" data-record-browser data-locale={locale} data-experiment-id={experimentId} data-production-batch-label={productionBatchLabel} data-record-base={`${locale === 'en' ? '/en' : ''}/record-days/${slug}`} aria-label={t("按日期查看记录")}>
   <div class="record-date-picker__form">
-    <span>记录日期</span>
-    <button type="button" data-record-previous aria-label="较早一天的记录" disabled>←</button>
-    <button type="button" data-calendar-trigger aria-label="选择记录日期" aria-haspopup="dialog" aria-expanded="false" disabled><span data-record-selected>读取中…</span><span aria-hidden="true"> ▦</span></button>
-    <button type="button" data-record-next aria-label="较新一天的记录" disabled>→</button>
-    <button type="button" data-record-retry hidden>重试</button>
+    <span>{t("记录日期")}</span>
+    <button type="button" data-record-previous aria-label={t("较早一天的记录")} disabled>←</button>
+    <button type="button" data-calendar-trigger aria-label={t("选择记录日期")} aria-haspopup="dialog" aria-expanded="false" disabled><span data-record-selected>{t("读取中…")}</span><span aria-hidden="true"> ▦</span></button>
+    <button type="button" data-record-next aria-label={t("较新一天的记录")} disabled>→</button>
+    <button type="button" data-record-retry hidden>{t("重试")}</button>
   </div>
-  <p role="status" data-record-status>正在读取日期…</p>
+  <p role="status" data-record-status>{t("正在读取日期…")}</p>
   <dialog class="record-calendar" aria-labelledby="record-calendar-title" data-record-calendar>
-    <div class="record-calendar__top"><h2 id="record-calendar-title">选择记录日期</h2><button type="button" data-calendar-close aria-label="关闭日历">×</button></div>
-    <div class="record-calendar__month"><button type="button" data-calendar-previous aria-label="上个月">←</button><h3 tabindex="-1" data-calendar-month aria-live="polite"></h3><button type="button" data-calendar-next aria-label="下个月">→</button></div>
-    <table role="grid" aria-label="有记录的日期"><thead><tr>{['一','二','三','四','五','六','日'].map(day=><th scope="col">{day}</th>)}</tr></thead><tbody data-calendar-days></tbody></table>
-    <p class="record-calendar__hint">灰色日期无记录</p>
+    <div class="record-calendar__top"><h2 id="record-calendar-title">{t("选择记录日期")}</h2><button type="button" data-calendar-close aria-label={t("关闭日历")}>×</button></div>
+    <div class="record-calendar__month"><button type="button" data-calendar-previous aria-label={t("上个月")}>←</button><h3 tabindex="-1" data-calendar-month aria-live="polite"></h3><button type="button" data-calendar-next aria-label={t("下个月")}>→</button></div>
+    <table role="grid" aria-label={t("有记录的日期")}><thead><tr>{(locale === 'en' ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : ['一','二','三','四','五','六','日']).map(day=><th scope="col">{day}</th>)}</tr></thead><tbody data-calendar-days></tbody></table>
+    <p class="record-calendar__hint">{t("灰色日期无记录")}</p>
   </dialog>
-  <noscript><p>请启用 JavaScript 选择日期并读取当天记录。</p></noscript>
+  <noscript><p>{t("请启用 JavaScript 选择日期并读取当天记录。")}</p></noscript>
 </section>
 <script>
   import { initRecordBrowser } from '../lib/record-day-browser';

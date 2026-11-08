@@ -6,7 +6,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { sortExperimentsNewestFirst } from '../../../lib/experiments';
 
 const translated = (await getCollection('experimentsEn', isPublicExperiment)).sort(sortExperimentsNewestFirst);
-const experiments = translated.length ? translated : (await getCollection('experiments', isPublicExperiment)).sort(sortExperimentsNewestFirst);
+const experiments = translated;
 ---
 
 <BaseLayout
@@ -23,7 +23,7 @@ const experiments = translated.length ? translated : (await getCollection('exper
 		</header>
 		<section class="section section--tint" aria-label="All experiments">
 			<div class="shell experiment-list">
-				{experiments.map((experiment) => <ExperimentCard experiment={experiment} locale={translated.length ? "en" : "zh"} />)}
+				{experiments.map((experiment) => <ExperimentCard experiment={experiment} locale="en" />)}
 			</div>
 		</section>
 	</main>

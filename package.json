@@ -12,7 +12,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "node tests/run.mjs",
-    "test:theme": "node tests/browser-theme.mjs"
+    "test:theme": "node tests/browser-theme.mjs",
+    "test:i18n": "node scripts/sync-english-records.mjs --check && node tests/browser-i18n.mjs"
   },
   "dependencies": {
     "astro": "^7.2.6"
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.0"
   }
 }
