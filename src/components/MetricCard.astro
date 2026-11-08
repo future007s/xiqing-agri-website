@@ -7,9 +7,10 @@ interface Props {
 }
 
 const { label, value, kind, pending = false } = Astro.props;
+const textualValue = /[a-z]{5,}/i.test(value);
 ---
 
-<article class:list={['metric-card', { 'metric-card--pending': pending }]}>
+<article class:list={['metric-card', { 'metric-card--pending': pending, 'metric-card--text': textualValue }]} style={{'--metric-value-length': String(Math.max(1, value.length))}}>
 	<div><span>{label}</span><small>{kind}</small></div>
 	<strong>{value}</strong>
 </article>

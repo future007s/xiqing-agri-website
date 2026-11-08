@@ -106,12 +106,15 @@ h1, h2, h3 { line-height: 1.08; letter-spacing: -0.045em; }
 .experiment-code { margin-bottom: 1rem; font-size: .72rem; color: var(--signal); }
 .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-block: 1rem 3rem; border-top: 1px solid #4b4d47; border-left: 1px solid #4b4d47; }
 .metric-card {
-	display: flex; min-height: 150px; flex-direction: column; justify-content: space-between; padding: 1rem;
+	container-type: inline-size; min-width: 0; display: flex; min-height: 150px; flex-direction: column; justify-content: space-between; padding: 1rem;
 	border-right: 1px solid #4b4d47; border-bottom: 1px solid #4b4d47;
 }
-.metric-card > div { display: flex; justify-content: space-between; gap: 1rem; font-size: .77rem; }
+.metric-card > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; font-size: .77rem; }
 .metric-card small { font-size: .56rem; color: #999b93; }
-.metric-card strong { font-size: clamp(1.8rem, 5vw, 3.7rem); line-height: 1; letter-spacing: -.05em; }
+.metric-card strong { max-width: 100%; overflow-wrap: anywhere; font-size: clamp(1.8rem, 5vw, 3.7rem); line-height: 1; letter-spacing: -.05em; }
+/* Size words to the card's available width; numeric readings retain the large type. */
+.metric-card--text strong { font-size: clamp(1rem, calc(190cqi / var(--metric-value-length)), 3.7rem); line-height: 1.1; }
+.record-data--compact .metric-card--text strong { font-size: clamp(1rem, calc(190cqi / var(--metric-value-length)), 2.8rem); }
 .metric-card--pending strong { color: #8c8f87; }
 .text-link { display: inline-flex; align-items: center; gap: 1.2rem; padding-bottom: .15rem; border-bottom: 1px solid currentColor; font-size: .8rem; font-weight: 700; }
 .text-link--light { color: var(--white); }
