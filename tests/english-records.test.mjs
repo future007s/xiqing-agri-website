@@ -52,3 +52,9 @@ test('unknown source prose is reported instead of silently becoming Chinese fall
   assert.equal(englishText('11月6日育苗观察'),'Growing observation, 6 November');
   assert.equal(englishData({value:49,unit:'%RH',sensor:'XQ-CTRL-01'}).value,49);
 });
+
+test('batch count reports have Chinese and English display labels',async()=>{
+  const layout=await read('src/layouts/TraceBatchLayout.astro');
+  assert.match(layout,/count_report: 'Count report'/);
+  assert.match(layout,/count_report: '数量报告'/);
+});

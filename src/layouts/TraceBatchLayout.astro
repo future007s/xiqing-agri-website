@@ -24,8 +24,8 @@ const alternatePath = alternate ? `${isEnglish ? '' : '/en'}/trace/${alternate.i
 const statusLabel = isEnglish ? traceStatusLabelsEn[data.status] : traceStatusLabels[data.status];
 const resolutions = isEnglish ? resolutionLabelsEn : resolutionLabels;
 const productionTypeLabels: Record<string, string> = isEnglish
-  ? {transplant: 'Transplanting', irrigation: 'Water and nutrients', count_correction: 'Count correction'}
-  : {transplant: '移栽', irrigation: '水肥', count_correction: '数量更正'};
+  ? {transplant: 'Transplanting', irrigation: 'Water and nutrients', count_correction: 'Count correction', count_report: 'Count report'}
+  : {transplant: '移栽', irrigation: '水肥', count_correction: '数量更正', count_report: '数量报告'};
 const title = isEnglish
 	? `${data.displayId} Trace Record | XIQING AGRI`
 	: `${data.displayId} 追溯记录 | 曦清农业 XIQING AGRI`;
