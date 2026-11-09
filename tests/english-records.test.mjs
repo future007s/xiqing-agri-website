@@ -35,8 +35,14 @@ test('English daily records retain all dates, IDs, counts, photos, times and mea
     assert.deepEqual(output.batches.map(b=>[b.key,b.context.sowing,b.context.tray_holes,b.context.sown_seeds,b.records.map(r=>[r.id,r.when,r.images.map(i=>[i.id,i.date,i.src])])]),day.batches.map(b=>[b.key,b.context.sowing,b.context.tray_holes,b.context.sown_seeds,b.records.map(r=>[r.id,r.when,r.images.map(i=>[i.id,i.date,i.src])])]));
   }
   assert.equal(currentGrowingRecord(en,'en').phase,'Transplanted');
-  assert.match(currentGrowingRecord(en,'en').summary,/6 November 2026/);
-  assert.match(currentGrowingRecord(zh).summary,/11 月 6 日/);
+  assert.match(currentGrowingRecord(en,'en').summary,/current transplanted count is 66 plants/);
+  assert.equal(translated.days.at(-1).date,'2026-11-09');
+  assert.match(currentGrowingRecord(zh).summary,/当前移栽数量为66株/);
+  assert.ok(source.days.some(d=>d.date==='2026-11-06'));
+  const batch=front(await read('src/content/trace-batches/pb-qdf01-20261104-01.md'));
+  assert.equal(batch.declaredMemberCount,66);
+  assert.match(batch.productionRecords.find(r=>r.id==='B20261104-01-COUNT-REPORT-20261109').summary,/当前移栽数量为66株/);
+  assert.match(batch.productionRecords.find(r=>r.id==='B20261104-01-COUNT-CORRECTION-20261105').summary,/更正为49株/);
   const nursery=presentProductionDay(translated.days[0],'en');
   assert.ok(nursery.nurseryOrigins.length);
   assert.doesNotMatch(JSON.stringify(nursery),/[\u3400-\u9fff]/u);

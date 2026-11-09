@@ -85,9 +85,9 @@ try {
   await page.goto(base+experiment+'?date=2099-01-01');await page.waitForSelector(`[data-record-day="${index.latest}"]`);
   assert.match(await page.locator('[data-record-status]').innerText(),/Showing an available record date/);
   // Exercise failed/empty responses without contacting a service.
-  await page.route('**/en/record-days/*/2026-11-06.json',route=>route.fulfill({status:503,body:'{}'}));
+  await page.route(`**/en/record-days/*/${index.latest}.json`,route=>route.fulfill({status:503,body:'{}'}));
   await page.reload();await page.waitForSelector('[data-record-retry]:not([hidden])');await audit(page,'load failure');
-  await page.unroute('**/en/record-days/*/2026-11-06.json');
+  await page.unroute(`**/en/record-days/*/${index.latest}.json`);
   await page.locator('[data-record-retry]').click();await page.waitForSelector('[data-record-day]');
   await page.route('**/en/record-days/*/index.json',route=>route.fulfill({json:{schema_version:1,experiment_id:'NURSERY-20261024-01',latest:null,dates:[]}}));
   await page.reload();await page.waitForFunction(()=>document.querySelector('[data-record-status]')?.textContent==='No records');await audit(page,'no records');
