@@ -10,6 +10,29 @@ const front = text => parse(text.split('---')[1]);
 const entryForContract = contract => ({data:{id:contract.experiment_id},
   body:`<!-- xiqing-record-days:v1\n${JSON.stringify(contract)}\nxiqing-record-days:v1 -->`});
 
+test('purchased strawberries have a separate dated record without fabricated nursery or survival figures',async()=>{
+  const id='STRAWBERRY-20261110-01';
+  const zh=await read('src/content/experiments/strawberry-20261110-01.md');
+  const en=await read('src/content/experiments-en/strawberry-20261110-01.md');
+  const contract=parseRecordContract(zh,id);
+  assert.deepEqual(parseRecordContract(en,id),englishData(contract));
+  assert.equal(front(zh).plant,'草莓');
+  assert.equal(front(zh).cultivar,null);
+  assert.equal(front(zh).survivalRate,undefined);
+  assert.equal(front(zh).yieldKg,undefined);
+  assert.equal(contract.days.length,1);
+  assert.equal(contract.days[0].date,'2026-11-10');
+  assert.equal(contract.days[0].environment.length,0);
+  const batch=contract.days[0].batches[0];
+  assert.equal(batch.context.crop,'草莓');
+  assert.equal(batch.context.sowing.value,null);
+  assert.equal(batch.context.sown_seeds,null);
+  assert.equal(batch.context.tray_holes,null);
+  assert.equal(batch.records[0].images.length,4);
+  assert.match(batch.records[0].fields.find(f=>f.label==='数量口径').value,/20株.*当日报告.*不作为成活统计/);
+  assert.doesNotMatch(JSON.stringify(contract),/66株|49株/);
+});
+
 test('every public experiment and production batch has an up-to-date English counterpart',async()=>{
   assert.ok(await syncEnglishRecords({check:true}) >= 2);
   for (const [folder, excluded] of [['experiments','T01-001'],['trace-batches','PB-QDF01-20260824-01']]) {
