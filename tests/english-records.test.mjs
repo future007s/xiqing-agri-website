@@ -126,3 +126,17 @@ test('batch count reports have Chinese and English display labels',async()=>{
   assert.match(layout,/count_report: 'Count report'/);
   assert.match(layout,/count_report: '数量报告'/);
 });
+
+test('traceability keeps strawberry additions and removals separate from lettuce and harvest', async () => {
+  const {parse} = await import('yaml');
+  const readBatch = async name => parse((await readFile(new URL(`../src/content/trace-batches/${name}.md`, import.meta.url), 'utf8')).split('---')[1]);
+  const strawberry = await readBatch('pb-qdf01-20261110-01');
+  const lettuce = await readBatch('pb-qdf01-20261104-01');
+  assert.equal(strawberry.sourceExperimentId, 'STRAWBERRY-20261110-01');
+  assert.equal(strawberry.declaredMemberCount, undefined);
+  assert.equal(strawberry.productionRecords.find(r => r.type === 'addition').at, '2026-11-10');
+  assert.match(strawberry.productionRecords.find(r => r.type === 'removal').summary, /2株/);
+  assert.equal(strawberry.productionRecords.find(r => r.type === 'maintenance').at, '2026-11-15');
+  assert.match(lettuce.productionRecords.find(r => r.type === 'removal').summary, /原因尚未确认/);
+  assert.equal(strawberry.harvestBatches.length, 0);
+});
