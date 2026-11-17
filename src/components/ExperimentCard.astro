@@ -14,8 +14,8 @@ const isEnglish = locale === 'en';
 const growing = currentGrowingRecord(experiment, locale);
 const href = `${isEnglish ? '/en' : ''}/experiments/${experiment.id}`;
 const labels = isEnglish
-	? { date: 'Date', tower: 'Tower', crop: 'Crop', yield: 'Yield', view: 'View experiment', pending: 'Pending' }
-	: { date: '日期', tower: '塔型', crop: '作物', yield: '产量', view: '查看实验', pending: '待实测' };
+	? { date: 'Started', tower: 'Tower', crop: 'Crop', yield: 'Yield', view: 'View experiment', pending: 'Pending' }
+	: { date: '开始日期', tower: '塔型', crop: '作物', yield: '产量', view: '查看实验', pending: '待实测' };
 ---
 
 <article class="experiment-card">
@@ -27,6 +27,7 @@ const labels = isEnglish
 		<h3>{data.title}</h3>
 		<dl>
 			<div><dt>{labels.date}</dt><dd>{formatDate(data.startDate)}</dd></div>
+			{growing.date && <div><dt>{isEnglish ? 'Latest record' : '最新记录'}</dt><dd>{formatDate(growing.date)}</dd></div>}
 			<div><dt>{labels.tower}</dt><dd>{data.tower}</dd></div>
 			<div><dt>{labels.crop}</dt><dd>{data.plant}</dd></div>
 			{data.yieldKg != null ? <div><dt>{labels.yield}</dt><dd>{displayValue(data.yieldKg, 'kg', labels.pending)}</dd></div> : growing.phase && <div><dt>{isEnglish ? 'Stage' : '阶段'}</dt><dd>{growing.phase}</dd></div>}

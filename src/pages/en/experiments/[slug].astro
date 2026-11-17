@@ -39,6 +39,7 @@ const publicAnalyses = data.analyses.filter((item) => item.reviewStatus === 'con
                 <div><p class="eyebrow">{data.id} · {data.tower}</p><h1>{data.title}</h1><p class="record-summary-start">Start date {formatDate(data.startDate)}</p></div>
                 <RecordDatePicker experimentId={data.id} slug={experiment.id} locale="en" productionBatchLabel={linkedProductionBatches.length === 1 ? linkedProductionBatches[0].data.displayId : undefined} />
             </header>}
+            {data.id === 'STRAWBERRY-20261110-01' && <p class="experiment-trace-link"><span>This page records the strawberry purchase and tower placement. For subsequent shared-tower camera observations, see</span><a href="/en/experiments/nursery-20261024-01">Ongoing tower observations ↗</a></p>}
 			<div class="section-heading section-heading--light section-heading--row">
 				<div><p class="eyebrow">MEASUREMENTS</p><h2 id="data-title">Data summary</h2></div>
 

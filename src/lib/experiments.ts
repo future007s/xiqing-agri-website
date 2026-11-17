@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import { currentGrowingRecord } from './public-records';
 
 export const statusLabels = {
 	preparing: '准备中',
@@ -32,5 +33,5 @@ export function sortExperimentsNewestFirst(
 	a: CollectionEntry<'experiments'> | CollectionEntry<'experimentsEn'>,
 	b: CollectionEntry<'experiments'> | CollectionEntry<'experimentsEn'>,
 ): number {
-	return b.data.startDate.localeCompare(a.data.startDate);
+	return (currentGrowingRecord(b).date ?? b.data.startDate).localeCompare(currentGrowingRecord(a).date ?? a.data.startDate) || b.data.startDate.localeCompare(a.data.startDate);
 }
