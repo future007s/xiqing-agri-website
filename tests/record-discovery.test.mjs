@@ -17,3 +17,9 @@ test('strawberry detail links to ongoing shared-tower observations in both langu
  assert.ok(source.includes(`href="/${prefix}experiments/nursery-20261024-01"`));
  }
 });
+
+test('historical count uses its report date, never the transplant date', async()=>{
+ const {historicalCountDate}=await import('../src/lib/traceability.ts');
+ assert.equal(historicalCountDate({productionRecords:[{type:'transplant',at:'2026-11-04'},{type:'count_report',at:'2026-11-09'},{type:'removal',at:'2026-11-15'}]}),'2026-11-09');
+ assert.equal(historicalCountDate({productionRecords:[{type:'transplant',at:'2026-11-04'}]}),undefined);
+});

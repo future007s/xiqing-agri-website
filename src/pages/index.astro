@@ -1,4 +1,5 @@
 ---
+import { historicalCountDate } from '../lib/traceability';
 import { getCollection } from 'astro:content';
 import { currentGrowingRecord, isPublicExperiment, isPublicTraceBatch, productionBatchesForExperiment } from '../lib/public-records';
 import ExperimentCard from '../components/ExperimentCard.astro';
@@ -67,7 +68,7 @@ const description =
 					<div class="metric-grid">
 						<MetricCard label="作物" value={featuredExperiment.data.plant} kind="当前种植" />
 						<MetricCard label="阶段" value={growing?.phase || statusLabels[featuredExperiment.data.status]} kind="当前状态" />
-						{currentBatch?.data.declaredMemberCount != null && <MetricCard label="移栽数量" value={`${currentBatch.data.declaredMemberCount} 株`} kind={formatDate(currentBatch.data.startedAt)} />}
+						{currentBatch?.data.declaredMemberCount != null && <MetricCard label="历史数量报告" value={`${currentBatch.data.declaredMemberCount} 株`} kind={`${formatDate(historicalCountDate(currentBatch.data))} · 非当前成活数`} />}
 						{growing?.date && <MetricCard label="最近记录" value={formatDate(growing.date)} kind="记录日期" />}
 					</div>
 

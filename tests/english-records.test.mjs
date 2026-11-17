@@ -20,7 +20,8 @@ test('purchased strawberries have a separate dated record without fabricated nur
   assert.equal(front(zh).cultivar,null);
   assert.equal(front(zh).survivalRate,undefined);
   assert.equal(front(zh).yieldKg,undefined);
-  assert.equal(contract.days.length,1);
+  assert.deepEqual(contract.days.map(day=>day.date),['2026-11-10','2026-11-15']);
+  assert.equal(contract.days[1].batches.flatMap(batch=>batch.records).length,2);
   assert.equal(contract.days[0].date,'2026-11-10');
   assert.equal(contract.days[0].environment.length,0);
   const batch=contract.days[0].batches[0];

@@ -1,4 +1,5 @@
 ---
+import { historicalCountDate } from '../lib/traceability';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { isPublicTraceBatch } from '../lib/public-records';
 import BaseLayout from './BaseLayout.astro';
@@ -120,7 +121,7 @@ const inspectionLabel = data.inspections.length > 0
 					<div><dt>{labels.crop}</dt><dd>{data.crop.name}{data.crop.cultivar && ` · ${data.crop.cultivar}`}</dd></div>
 					<div><dt>{labels.where}</dt><dd>{data.farm.location ?? data.farm.name}{towerLabel && <small>{towerLabel}</small>}</dd></div>
 					{data.startedAt && <div><dt>{labels.started}</dt><dd>{formatTraceDate(data.startedAt, locale)}</dd></div>}
-					{data.declaredMemberCount != null && <div><dt>{isEnglish ? 'Transplanted' : '移栽数量'}</dt><dd>{data.declaredMemberCount}{isEnglish ? ' plants' : ' 株'}</dd></div>}
+					{data.declaredMemberCount != null && <div><dt>{isEnglish ? 'Historical reported count' : '历史数量报告'}</dt><dd>{data.declaredMemberCount}{isEnglish ? ' plants' : ' 株'}{historicalCountDate(data) && <small> · {historicalCountDate(data)}</small>}</dd></div>}
 					{data.harvestBatches.length > 0 && <div><dt>{labels.harvest}</dt><dd>{formatTraceDate(data.harvestBatches[0].harvestedAt, locale)}</dd></div>}
 					{data.inspections.length > 0 && <div><dt>{labels.inspection}</dt><dd>{inspectionLabel}</dd></div>}
 					{loopLabel && <div><dt>{labels.inputs}</dt><dd>{loopLabel}</dd></div>}

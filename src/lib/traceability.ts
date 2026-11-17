@@ -59,3 +59,7 @@ export function sortTraceBatchesNewestFirst(
 ): number {
 	return b.data.id.localeCompare(a.data.id);
 }
+
+export function historicalCountDate(data: { productionRecords: Array<{type: string; at?: string | null}> }): string | undefined {
+ return data.productionRecords.filter(record => record.type === "count_report" && record.at).map(record => record.at!).sort().at(-1);
+}
