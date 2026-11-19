@@ -25,8 +25,8 @@ const alternatePath = alternate ? `${isEnglish ? '' : '/en'}/trace/${alternate.i
 const statusLabel = isEnglish ? traceStatusLabelsEn[data.status] : traceStatusLabels[data.status];
 const resolutions = isEnglish ? resolutionLabelsEn : resolutionLabels;
 const productionTypeLabels: Record<string, string> = isEnglish
-  ? {transplant: 'Transplanting', irrigation: 'Water and nutrients', count_correction: 'Count correction', count_report: 'Count report', addition: 'New plants', removal: 'Plant removal', maintenance: 'Maintenance', harvest: 'Harvest'}
-  : {transplant: '移栽', irrigation: '水肥', count_correction: '数量更正', count_report: '数量报告', addition: '新增苗', removal: '移除', maintenance: '维护', harvest: '收获'};
+  ? {transplant: 'Transplanting', irrigation: 'Water and nutrients', count_correction: 'Count correction', count_report: 'Count report', addition: 'New plants', removal: 'Plant removal', mortality: 'Plant loss', maintenance: 'Maintenance', harvest: 'Harvest'}
+  : {transplant: '移栽', irrigation: '水肥', count_correction: '数量更正', count_report: '数量报告', addition: '新增苗', removal: '移除', mortality: '枯死', maintenance: '维护', harvest: '收获'};
 const title = isEnglish
 	? `${data.displayId} Trace Record | XIQING AGRI`
 	: `${data.displayId} 追溯记录 | 曦清农业 XIQING AGRI`;
