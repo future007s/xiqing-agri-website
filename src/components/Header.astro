@@ -15,12 +15,14 @@ const links = isEnglish
 		{ href: prefix, label: 'Home' },
 		{ href: `${prefix}/experiments`, label: 'Experiments' },
 		{ href: `${prefix}/trace`, label: 'Trace' },
+		{ href: '/monitoring', label: 'Monitoring' },
 		{ href: `${prefix}/about`, label: 'About' },
 	]
 	: [
 		{ href: '/', label: '首页' },
 		{ href: '/experiments', label: '实验记录' },
 		{ href: '/trace', label: '产品追溯' },
+		{ href: '/monitoring', label: '农业监测' },
 		{ href: '/about', label: '关于曦清' },
 	];
 
@@ -41,7 +43,7 @@ const isActive = (href: string) => {
 		<div class="site-header__actions">
 			<nav aria-label={isEnglish ? 'Primary navigation' : '主导航'}>
 				{links.map((link) => (
-					<a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
+					<a href={link.href} title={link.href === '/monitoring' ? (isEnglish ? 'Connect to Tailscale to open agricultural monitoring' : '连接 Tailscale 后进入农业监测') : undefined} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
 				))}
 			</nav>
 			<a
